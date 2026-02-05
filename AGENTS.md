@@ -1,21 +1,183 @@
-# 🏛️ Arquitectura de Agentes (Service Layer) - Vue 3 & TypeScript
+# AGENTS.md
 
-Este documento define el estándar para la implementación de la capa de **Agents** (Agentes de API) en el proyecto, utilizando la **Composition API**, **pnpm**, y **Vitest**.
-
-## 🎯 Principios de Ingeniería Aplicados
-
-1.  **Single Responsibility (S):** Cada agente se encarga exclusivamente de la comunicación con un dominio de datos específico.
-2.  **Inversión de Dependencias (D):** Los componentes no gestionan URLs ni lógica de red; consumen una interfaz reactiva.
-3.  **Encapsulamiento:** El estado interno (`ref`) se expone como `readonly` para evitar mutaciones accidentales desde los componentes.
-4.  **DRY & KISS:** Estructura minimalista que evita la redundancia mediante el uso de composables.
+Este documento define cómo trabajamos en este repositorio: estilo, arquitectura, performance, testing y convenciones.  
+**Stack:** Vue 3 + TypeScript + pnpm + Vitest.
 
 ---
 
-## 📂 Estructura del Módulo
+## 1) Principios no negociables
 
-```text
-src/
- ├── types/              # Definiciones de interfaces (Contracts)
- ├── agents/             # Lógica de comunicación y estado reactivo
- │    ├── useUserAgent.ts
- │    └── __tests__/     # Pruebas unitarias con Vitest
+### Clean Code
+- Nombres explícitos > comentarios.
+- Funciones pequeñas: **1 intención** por función.
+- Complejidad ciclomática baja (evitar anidamientos profundos).
+- Early returns y guard clauses.
+- Evitar “boolean traps” (múltiples `boolean` en params); preferir objetos con propiedades nombradas.
+
+### Performance-first (sin prematuridad)
+- Medir antes de optimizar (profiling).
+- Evitar renders innecesarios: computeds correctos, evitar watchers prescindibles.
+- Minimizar trabajo en `watchEffect` y `watch`.
+- Cargas perezosas (lazy) para rutas y features grandes.
+- Evitar reactividad profunda innecesaria: preferir `shallowRef` / `markRaw` en objetos grandes no reactivos.
+- Estructuras inmutables donde encaje: facilita memoización y test.
+
+### SOLID + DRY + KISS
+- SOLID aplicado a nivel de módulos/servicios.
+- DRY sin obsesión: no abstraer sin motivo.
+- KISS: primero una solución simple y correcta.
+
+### Arquitectura Hexagonal (Ports & Adapters)
+- El dominio no depende del framework ni de IO.
+- Los casos de uso orquestan, el dominio decide, los adaptadores ejecutan.
+- Sustituibilidad: cualquier adapter puede cambiar sin tocar dominio.
+
+---
+
+## 2) Arquitectura del proyecto 
+
+Por determinar
+
+## 3) Guía Vue (UI limpia y predecible)
+
+### Componentes
+- Componentes “tontos” (presentational) vs “listos” (container):
+  - Presentational: solo props + emits.
+  - Container/page: orquesta use cases y estado.
+- Props inmutables; no mutar props.
+- `emits` tipados; preferir eventos semánticos.
+
+### Composables
+- Un composable = una responsabilidad.
+- Los composables no deben hacer IO directo salvo si son adapters explícitos en `infrastructure/`.
+- Evitar composables “god”.
+
+### Estado (stores)
+- El store no debe contener lógica de dominio compleja: delegar a use cases/servicios de aplicación.
+- Acceso a store desde UI; dominio no conoce stores.
+
+### Re-render control
+- Evitar `computed` con efectos secundarios.
+- Evitar watchers para derivar estado: preferir `computed`.
+- Para listas grandes: key estable, virtualización si aplica.
+
+---
+
+## 4) TypeScript: normas de diseño
+
+- `strict: true` (preferible).
+- Tipos de dominio explícitos: `Money`, `UserId`, etc. (type aliases o branded types si aporta).
+- Evitar `any` y `as` salvo en bordes (adapters).
+- Preferir `unknown` en entradas externas; validar y transformar a tipos internos.
+- No exportar tipos internos “accidentales”: API pública clara.
+
+---
+
+## 5) Testing (Vitest)
+
+### Pirámide
+1. **Unit** (dominio y casos de uso): rápidos, deterministas.
+2. **Integration** (adapters): con mocks controlados o testcontainers si aplica.
+3. **E2E** (si existe): pocos y críticos.
+
+### Convenciones
+- Arrange / Act / Assert (AAA).
+- Testea comportamiento, no implementación.
+- Nombrado: `should_<expected>_when_<context>`.
+- Evitar snapshots para lógica; solo para UI estable y revisable.
+
+### Mocking
+- Mockear en los bordes: HTTP, storage, fecha/hora, random.
+- No mockear lo que puedas construir real (dominio).
+
+---
+
+## 6) Estándares de código y revisiones
+
+### Formato y lint
+- Código consistente (formatter) + reglas de lint estrictas.
+- Imports ordenados; sin imports muertos.
+- Sin `console.log` en producción.
+
+### Pull Requests
+- PR pequeño y enfocado.
+- Checklist:
+  - ✅ Compila
+  - ✅ Tests pasan
+  - ✅ No se rompe el contrato público
+  - ✅ No hay deuda oculta (TODOs sin ticket)
+  - ✅ Performance verificada si cambia render/loops/IO
+
+### Commits
+- Convencionales (recomendado): `feat:`, `fix:`, `refactor:`, `test:`, `chore:`.
+- Mensajes descriptivos, no “WIP”.
+
+---
+
+## 7) Manejo de errores
+
+- Errores del dominio como tipos (clases o discriminated unions).
+- En UI: mensajes de error user-friendly, logs técnicos fuera.
+- No usar excepciones para control de flujo en dominio si se puede modelar.
+
+---
+
+## 8) API pública (si es librería o módulos reutilizables)
+
+- Exportar desde un único `index.ts` por paquete/módulo.
+- SemVer: cambios breaking bien identificados.
+- Mantener compatibilidad y deprecaciones documentadas.
+- Tipos y docs primero: la DX es parte del producto.
+
+---
+
+## 9) Performance checklist (antes de merge)
+
+- ¿Hay loops sobre grandes colecciones en render/computed?
+- ¿Hay watchers que podrían ser `computed`?
+- ¿Se crean objetos/funciones nuevas en cada render sin necesidad?
+- ¿Se puede memoizar/normalizar?
+- ¿Hay lazy loading para rutas/features grandes?
+- ¿La reactividad es la mínima necesaria?
+
+---
+
+## 10) Scripts esperados (pnpm)
+
+Recomendación de scripts estándar (referencia):
+
+- `pnpm dev`
+- `pnpm build`
+- `pnpm test` / `pnpm test:watch`
+- `pnpm lint`
+- `pnpm typecheck`
+
+> Nota: el repo puede definirlos en `package.json`. Este documento solo fija expectativas.
+
+---
+
+## 11) Qué NO hacemos
+
+- No metemos lógica de dominio en componentes Vue.
+- No acoplamos casos de uso a Axios/fetch directamente.
+- No introducimos dependencias pesadas sin justificar (bundle size).
+- No optimizamos “a ojo” sin medir si es crítico.
+- No usamos `any` como salida fácil.
+
+---
+
+## 12) Definiciones rápidas
+
+- **Dominio:** reglas de negocio puras.
+- **Caso de uso:** orquestación (aplicación).
+- **Puerto:** interfaz del dominio hacia el exterior.
+- **Adapter:** implementación concreta (infra).
+- **UI:** Vue, composición y experiencia de usuario.
+
+---
+
+**Si dudas dónde poner algo:**
+- ¿Es regla de negocio? → `domain/`
+- ¿Coordina pasos? → `application/use-cases/`
+- ¿Habla con el mundo (HTTP/Storage/Clock)? → `infrastructure/`
+- ¿Renderiza/interactúa? → `ui/`
