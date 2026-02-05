@@ -4,7 +4,7 @@ Proyecto base con Vue 3 + Vite + TypeScript.
 
 ## Requisitos
 
-- Node.js (recomendado 18+)
+- Node.js (recomendado 20+)
 - pnpm
 
 ## Instalacion
