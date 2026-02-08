@@ -1,4 +1,4 @@
-export type ServiceCategory = 'manual' | 'hydrotherapy' | 'aesthetic' | 'wellness';
+export type ServiceCategory = "manual" | "hydrotherapy" | "aesthetic" | "wellness";
 
 export interface Service {
   id: string;

@@ -1,4 +1,4 @@
-export type TherapistRole = 'manager' | 'therapist';
+export type TherapistRole = "manager" | "therapist";
 
 export interface Therapist {
   id: string;
@@ -12,4 +12,8 @@ export interface Therapist {
   color: string;
   role: TherapistRole;
   spaId: string;
+  /** Hora de inicio del horario laboral por defecto (0-24). */
+  defaultWorkStartHour?: number;
+  /** Hora de fin del horario laboral por defecto (0-24). */
+  defaultWorkEndHour?: number;
 }

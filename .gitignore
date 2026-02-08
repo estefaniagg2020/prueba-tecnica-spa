@@ -25,6 +25,7 @@ coverage/
 # Cache
 .cache/
 .pnpm-store/
+*.tsbuildinfo
 
 # Editors/OS
 .DS_Store

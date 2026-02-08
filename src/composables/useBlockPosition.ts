@@ -1,5 +1,5 @@
-import { computed, type MaybeRefOrGetter, toValue } from 'vue';
-import type { ScheduleBlock } from '@/types';
+import { computed, type MaybeRefOrGetter, toValue } from "vue";
+import type { ScheduleBlock } from "@/interfaces";
 
 const getMinutesFromMidnight = (dateStr: string): number => {
   const d = new Date(dateStr);
@@ -12,7 +12,7 @@ export const useBlockPosition = (
   block: MaybeRefOrGetter<ScheduleBlock>,
   startHour: MaybeRefOrGetter<number>,
   pixelsPerHour: MaybeRefOrGetter<number>,
-  topOffset: MaybeRefOrGetter<number> = () => 0
+  topOffset: MaybeRefOrGetter<number> = () => 0,
 ) => {
   const top = computed(() => {
     const b = toValue(block);

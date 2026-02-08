@@ -1,13 +1,14 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import type { Therapist } from '@/interfaces';
-import { DEFAULT_THERAPISTS } from '@/data/therapists';
-import { INDEX_NOT_FOUND } from '@/utils/array';
-import { generatePastelColor } from '@/utils/color';
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import type { Therapist } from "@/interfaces";
+import { DEFAULT_THERAPISTS } from "@/data/therapists";
+import { THERAPIST_MANAGER } from "@/data/constants";
+import { INDEX_NOT_FOUND } from "@/data/constants";
+import { generatePastelColor } from "@/utils/color";
 
-const STORAGE_KEY = 'spa-therapists-final';
+const STORAGE_KEY = "spa-therapists-final";
 
-export const useTherapistStore = defineStore('therapist', () => {
+export const useTherapistStore = defineStore("therapist", () => {
   const therapists = ref<Therapist[]>([]);
 
   const persistTherapists = () => {
@@ -26,10 +27,14 @@ export const useTherapistStore = defineStore('therapist', () => {
           return {
             ...t,
             linkedInUrl: t.linkedInUrl ?? def.linkedInUrl,
+            defaultWorkStartHour:
+              t.defaultWorkStartHour ?? def.defaultWorkStartHour ?? THERAPIST_MANAGER.DEFAULT_WORK_START_HOUR,
+            defaultWorkEndHour:
+              t.defaultWorkEndHour ?? def.defaultWorkEndHour ?? THERAPIST_MANAGER.DEFAULT_WORK_END_HOUR,
           };
         });
       } catch (e) {
-        console.error('Error parsing therapists from local storage', e);
+        console.error("Error parsing therapists from local storage", e);
         therapists.value = DEFAULT_THERAPISTS;
       }
     } else {
@@ -37,19 +42,21 @@ export const useTherapistStore = defineStore('therapist', () => {
     }
   };
 
-  const addTherapist = (therapist: Omit<Therapist, 'id' | 'color'> & { color?: string }) => {
+  const addTherapist = (therapist: Omit<Therapist, "id" | "color"> & { color?: string }) => {
     const newTherapist: Therapist = {
       ...therapist,
       id: crypto.randomUUID(),
       color: therapist.color || generatePastelColor(),
-      role: 'therapist'
+      role: "therapist",
+      defaultWorkStartHour: therapist.defaultWorkStartHour ?? THERAPIST_MANAGER.DEFAULT_WORK_START_HOUR,
+      defaultWorkEndHour: therapist.defaultWorkEndHour ?? THERAPIST_MANAGER.DEFAULT_WORK_END_HOUR,
     };
     therapists.value.push(newTherapist);
     persistTherapists();
   };
 
   const updateTherapist = (id: string, updates: Partial<Therapist>) => {
-    const index = therapists.value.findIndex(therapist => therapist.id === id);
+    const index = therapists.value.findIndex((therapist) => therapist.id === id);
     if (index !== INDEX_NOT_FOUND) {
       therapists.value[index] = { ...therapists.value[index], ...updates };
       persistTherapists();
@@ -57,12 +64,12 @@ export const useTherapistStore = defineStore('therapist', () => {
   };
 
   const deleteTherapist = (id: string) => {
-    therapists.value = therapists.value.filter(therapist => therapist.id !== id);
+    therapists.value = therapists.value.filter((therapist) => therapist.id !== id);
     persistTherapists();
   };
 
   const getTherapistById = (id: string) => {
-    return therapists.value.find(therapist => therapist.id === id);
+    return therapists.value.find((therapist) => therapist.id === id);
   };
 
   return {
@@ -71,6 +78,6 @@ export const useTherapistStore = defineStore('therapist', () => {
     addTherapist,
     updateTherapist,
     deleteTherapist,
-    getTherapistById
+    getTherapistById,
   };
 });

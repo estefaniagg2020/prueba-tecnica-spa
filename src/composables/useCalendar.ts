@@ -1,17 +1,16 @@
-import { ref, computed } from 'vue';
+import { ref, computed } from "vue";
 
-export const VIEW_DAY = 'day';
-export const VIEW_WEEK = 'week';
-export const VIEW_MONTH = 'month';
+export const VIEW_DAY = "day";
+export const VIEW_WEEK = "week";
+export const VIEW_MONTH = "month";
 const DAYS_PER_WEEK = 7;
-const DATE_FORMAT_LOCALE = 'es-ES';
+const DATE_FORMAT_LOCALE = "es-ES";
 
 export type ViewType = typeof VIEW_DAY | typeof VIEW_WEEK | typeof VIEW_MONTH;
 
 const getDaysBackToMonday = (dayOfWeek: number) => (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
 
-const getDaysInMonth = (date: Date) =>
-  new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
 export const useCalendar = () => {
   const currentDate = ref(new Date());
@@ -57,10 +56,8 @@ export const useCalendar = () => {
     currentDate.value = new Date();
   };
 
-  const formatDate = (
-    date: Date,
-    options: Intl.DateTimeFormatOptions = { dateStyle: 'medium' }
-  ) => new Intl.DateTimeFormat(DATE_FORMAT_LOCALE, options).format(date);
+  const formatDate = (date: Date, options: Intl.DateTimeFormatOptions = { dateStyle: "medium" }) =>
+    new Intl.DateTimeFormat(DATE_FORMAT_LOCALE, options).format(date);
 
   return {
     currentDate,
@@ -71,6 +68,6 @@ export const useCalendar = () => {
     next,
     prev,
     setToday,
-    formatDate
+    formatDate,
   };
 };

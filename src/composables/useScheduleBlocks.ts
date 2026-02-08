@@ -1,5 +1,5 @@
-import type { ScheduleBlock } from '@/types';
-import { isSameDay } from './useScheduleDates';
+import type { ScheduleBlock } from "@/interfaces";
+import { isSameDay } from "./useScheduleDates";
 
 export const filterBlocksByDay = (blocks: ScheduleBlock[], date: Date): ScheduleBlock[] =>
   blocks.filter((block) => {
@@ -10,7 +10,7 @@ export const filterBlocksByDay = (blocks: ScheduleBlock[], date: Date): Schedule
 export const filterBlocksByDayAndTherapist = (
   blocks: ScheduleBlock[],
   date: Date,
-  therapistId: string
+  therapistId: string,
 ): ScheduleBlock[] =>
   blocks.filter((block) => {
     const blockDate = new Date(block.start);

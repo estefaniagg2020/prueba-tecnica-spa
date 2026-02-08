@@ -1,11 +1,11 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import type { ScheduleBlock } from '@/interfaces';
-import { INDEX_NOT_FOUND } from '@/utils/array';
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import type { ScheduleBlock } from "@/interfaces";
+import { INDEX_NOT_FOUND } from "@/data/constants";
 
-const STORAGE_KEY = 'spa-schedule-blocks';
+const STORAGE_KEY = "spa-schedule-blocks";
 
-export const useScheduleStore = defineStore('schedule', () => {
+export const useScheduleStore = defineStore("schedule", () => {
   const blocks = ref<ScheduleBlock[]>([]);
 
   const persistBlocks = () => {
@@ -18,13 +18,13 @@ export const useScheduleStore = defineStore('schedule', () => {
       try {
         blocks.value = JSON.parse(stored);
       } catch (e) {
-        console.error('Error parsing schedule blocks', e);
+        console.error("Error parsing schedule blocks", e);
         blocks.value = [];
       }
     }
   };
 
-  const addBlock = (block: Omit<ScheduleBlock, 'id'>) => {
+  const addBlock = (block: Omit<ScheduleBlock, "id">) => {
     const newBlock: ScheduleBlock = {
       ...block,
       id: crypto.randomUUID(),
@@ -34,7 +34,7 @@ export const useScheduleStore = defineStore('schedule', () => {
   };
 
   const updateBlock = (id: string, updates: Partial<ScheduleBlock>) => {
-    const index = blocks.value.findIndex(block => block.id === id);
+    const index = blocks.value.findIndex((block) => block.id === id);
     if (index !== INDEX_NOT_FOUND) {
       blocks.value[index] = { ...blocks.value[index], ...updates };
       persistBlocks();
@@ -42,15 +42,13 @@ export const useScheduleStore = defineStore('schedule', () => {
   };
 
   const deleteBlock = (id: string) => {
-    blocks.value = blocks.value.filter(block => block.id !== id);
+    blocks.value = blocks.value.filter((block) => block.id !== id);
     persistBlocks();
   };
 
   const getBlocksByTherapist = (therapistId: string) => {
-    return blocks.value.filter(block => block.therapistId === therapistId);
+    return blocks.value.filter((block) => block.therapistId === therapistId);
   };
-
-
 
   return {
     blocks,
@@ -58,6 +56,6 @@ export const useScheduleStore = defineStore('schedule', () => {
     addBlock,
     updateBlock,
     deleteBlock,
-    getBlocksByTherapist
+    getBlocksByTherapist,
   };
 });

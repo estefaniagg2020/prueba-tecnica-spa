@@ -1,4 +1,4 @@
-import type { Therapist } from './therapist';
+import type { Therapist } from "./therapist";
 
 export interface ChartItem {
   label: string;
@@ -34,7 +34,7 @@ export interface QuickActionCardProps {
   title: string;
   subtitle: string;
   icon: string;
-  variant: 'blue' | 'purple' | 'orange' | 'green';
+  variant: "blue" | "purple" | "orange" | "green";
 }
 
 export interface RevenueChartProps {
@@ -52,7 +52,7 @@ export interface ModalProps {
 
 export interface BlockEditorModalProps {
   isOpen: boolean;
-  editBlock?: import('./schedule').ScheduleBlock;
+  editBlock?: import("./schedule").ScheduleBlock;
   initialDate?: Date;
   initialHour?: number;
 }

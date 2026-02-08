@@ -1,5 +1,4 @@
-import type { ScheduleBlockType } from '@/types';
-import { getBlockTypeCardStyle } from '@/data/scheduleBlockTypes';
+import type { ScheduleBlockType } from "@/interfaces";
+import { getBlockTypeCardStyle } from "@/data/scheduleBlockTypes";
 
-export const getBlockTypeCardStyles = (type: ScheduleBlockType) =>
-  getBlockTypeCardStyle(type);
+export const getBlockTypeCardStyles = (type: ScheduleBlockType) => getBlockTypeCardStyle(type);

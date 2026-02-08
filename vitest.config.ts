@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
-import viteConfig from './vite.config'
+import { defineConfig } from "vitest/config";
+import viteConfig from "./vite.config";
 
-export default defineConfig(viteConfig)
+export default defineConfig(viteConfig);

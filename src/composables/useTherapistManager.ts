@@ -1,10 +1,11 @@
-import { ref, reactive, computed, onMounted } from 'vue';
-import { useTherapistStore } from '@/stores/therapist';
-import { useSpaStore } from '@/stores/spa';
-import type { Therapist } from '@/interfaces';
-import { THERAPIST_MANAGER } from '@/data/constants';
+import { ref, reactive, computed, onMounted } from "vue";
+import { useTherapistStore } from "@/stores/therapist";
+import { useSpaStore } from "@/stores/spa";
+import type { Therapist } from "@/interfaces";
+import { THERAPIST_MANAGER } from "@/data/constants";
+import { getRandomAnimalAvatarUrl } from "@/utils/avatar";
 
-const DEFAULT_IDS_ORDER = ['1', '2', '3', '4', '5', '6', '7', '8'];
+const DEFAULT_IDS_ORDER = ["1", "2", "3", "4", "5", "6", "7", "8"];
 
 export type TherapistFormState = {
   name: string;
@@ -13,19 +14,23 @@ export type TherapistFormState = {
   weeklyHours: number;
   photoUrl: string;
   linkedInUrl: string | undefined;
-  role: 'therapist' | 'manager';
+  role: "therapist" | "manager";
   spaId: string;
+  defaultWorkStartHour: number;
+  defaultWorkEndHour: number;
 };
 
 const getInitialForm = (): TherapistFormState => ({
-  name: '',
-  email: '',
-  phoneNumber: '',
+  name: "",
+  email: "",
+  phoneNumber: "",
   weeklyHours: 40,
-  photoUrl: '',
+  photoUrl: "",
   linkedInUrl: undefined,
-  role: 'therapist',
-  spaId: ''
+  role: "therapist",
+  spaId: "",
+  defaultWorkStartHour: THERAPIST_MANAGER.DEFAULT_WORK_START_HOUR,
+  defaultWorkEndHour: THERAPIST_MANAGER.DEFAULT_WORK_END_HOUR,
 });
 
 export const useTherapistManager = () => {
@@ -53,14 +58,14 @@ export const useTherapistManager = () => {
 
   const resetForm = () => {
     Object.assign(form, getInitialForm());
-    form.spaId = spaStore.spas[0]?.id ?? '';
+    form.spaId = spaStore.spas[0]?.id ?? "";
   };
 
   const openCreateModal = () => {
     isEditing.value = false;
     editingId.value = null;
     resetForm();
-    form.photoUrl = `https://i.pravatar.cc/150?u=${Date.now()}`;
+    form.photoUrl = getRandomAnimalAvatarUrl();
     isModalOpen.value = true;
   };
 
@@ -72,9 +77,11 @@ export const useTherapistManager = () => {
     form.phoneNumber = therapist.phoneNumber;
     form.weeklyHours = therapist.weeklyHours;
     form.photoUrl = therapist.photoUrl;
-    form.linkedInUrl = therapist.linkedInUrl ?? '';
-    form.role = therapist.role as 'therapist' | 'manager';
-    form.spaId = therapist.spaId || (spaStore.spas[0]?.id ?? '');
+    form.linkedInUrl = therapist.linkedInUrl ?? "";
+    form.role = therapist.role as "therapist" | "manager";
+    form.spaId = therapist.spaId || (spaStore.spas[0]?.id ?? "");
+    form.defaultWorkStartHour = therapist.defaultWorkStartHour ?? THERAPIST_MANAGER.DEFAULT_WORK_START_HOUR;
+    form.defaultWorkEndHour = therapist.defaultWorkEndHour ?? THERAPIST_MANAGER.DEFAULT_WORK_END_HOUR;
     isModalOpen.value = true;
   };
 
@@ -86,9 +93,13 @@ export const useTherapistManager = () => {
     if (!form.spaId && spaStore.spas.length > 0) {
       form.spaId = spaStore.spas[0].id;
     }
+    const startH = form.defaultWorkStartHour;
+    const endH = form.defaultWorkEndHour <= startH ? startH + 1 : form.defaultWorkEndHour;
     const payload = {
       ...form,
-      linkedInUrl: form.linkedInUrl?.trim() || undefined
+      linkedInUrl: form.linkedInUrl?.trim() || undefined,
+      defaultWorkStartHour: startH,
+      defaultWorkEndHour: Math.min(24, endH),
     };
     if (isEditing.value && editingId.value) {
       store.updateTherapist(editingId.value, payload);
@@ -125,6 +136,6 @@ export const useTherapistManager = () => {
     closeModal,
     saveTherapist,
     deleteTherapist,
-    getSpaName
+    getSpaName,
   };
 };

@@ -13,8 +13,8 @@
 </template>
 
 <script setup lang="ts">
-import { RouterLink } from 'vue-router';
-import { NAV_LINKS } from '@/data/navLinks';
+  import { RouterLink } from "vue-router";
+  import { NAV_LINKS } from "@/data/navLinks";
 
-const navItems = NAV_LINKS;
+  const navItems = NAV_LINKS;
 </script>

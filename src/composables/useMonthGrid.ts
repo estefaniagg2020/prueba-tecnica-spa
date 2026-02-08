@@ -1,7 +1,7 @@
-import { computed, type MaybeRefOrGetter, toValue } from 'vue';
-import type { ScheduleBlock } from '@/types';
-import { isSameDay } from './useScheduleDates';
-import { filterBlocksByDay } from './useScheduleBlocks';
+import { computed, type MaybeRefOrGetter, toValue } from "vue";
+import type { ScheduleBlock } from "@/interfaces";
+import { isSameDay } from "./useScheduleDates";
+import { filterBlocksByDay } from "./useScheduleBlocks";
 
 export interface MonthGridDay {
   date: Date;
@@ -12,10 +12,7 @@ export interface MonthGridDay {
 
 const CELLS_COUNT = 42;
 
-export const useMonthGrid = (
-  currentDate: MaybeRefOrGetter<Date>,
-  blocks: MaybeRefOrGetter<ScheduleBlock[]>
-) => {
+export const useMonthGrid = (currentDate: MaybeRefOrGetter<Date>, blocks: MaybeRefOrGetter<ScheduleBlock[]>) => {
   const days = computed<MonthGridDay[]>(() => {
     const date = toValue(currentDate);
     const blocksList = toValue(blocks);
@@ -35,7 +32,7 @@ export const useMonthGrid = (
       const d = new Date(current);
       const isCurrentMonth = d.getMonth() === month;
       const dayBlocks = filterBlocksByDay(blocksList, d).sort(
-        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
       );
       result.push({
         date: d,

@@ -1,24 +1,29 @@
-import { computed, type MaybeRefOrGetter, toValue, type ComputedRef } from 'vue';
-import { formatHour } from './useScheduleDates';
+import { computed, type MaybeRefOrGetter, toValue, type ComputedRef } from "vue";
+import { formatSlotLabel } from "./useScheduleDates";
+
+const slotDurationToHourFraction = (minutes: number) => minutes / 60;
 
 export const useScheduleGrid = (
   startHour: MaybeRefOrGetter<number>,
   endHour: MaybeRefOrGetter<number>,
-  pixelsPerHour: MaybeRefOrGetter<number>
+  pixelsPerHour: MaybeRefOrGetter<number>,
+  slotDurationMinutes: MaybeRefOrGetter<number> = () => 60,
 ): {
-  hours: ComputedRef<number[]>;
+  slotStarts: ComputedRef<number[]>;
   totalHeight: ComputedRef<number>;
-  formatHour: (hour: number) => string;
-  getHourFromClick: (event: MouseEvent, topOffsetPx?: number) => number | null;
+  formatSlotLabel: (hour: number) => string;
+  getSlotStartFromClick: (event: MouseEvent, topOffsetPx?: number) => number | null;
 } => {
-  const hours = computed(() => {
+  const slotStarts = computed(() => {
     const start = toValue(startHour);
     const end = toValue(endHour);
-    const hourNumbers: number[] = [];
-    for (let hour = start; hour <= end; hour++) {
-      hourNumbers.push(hour);
+    const slotMins = toValue(slotDurationMinutes);
+    const step = slotDurationToHourFraction(slotMins);
+    const slots: number[] = [];
+    for (let h = start; h < end; h += step) {
+      slots.push(Math.round(h * 100) / 100);
     }
-    return hourNumbers;
+    return slots;
   });
 
   const totalHeight = computed(() => {
@@ -28,21 +33,24 @@ export const useScheduleGrid = (
     return (end - start) * pixels;
   });
 
-  const getHourFromClick = (event: MouseEvent, topOffsetPx = 0): number | null => {
+  const getSlotStartFromClick = (event: MouseEvent, topOffsetPx = 0): number | null => {
     const start = toValue(startHour);
     const end = toValue(endHour);
     const pixels = toValue(pixelsPerHour);
+    const slotMins = toValue(slotDurationMinutes);
+    const step = slotDurationToHourFraction(slotMins);
     const clickY = event.offsetY - topOffsetPx;
     const hourOffset = clickY / pixels;
-    const hour = Math.floor(start + hourOffset);
-    if (hour >= start && hour < end) return hour;
+    const slotIndex = Math.floor(hourOffset / step);
+    const slotStart = start + slotIndex * step;
+    if (slotStart >= start && slotStart < end) return Math.round(slotStart * 100) / 100;
     return null;
   };
 
   return {
-    hours,
+    slotStarts,
     totalHeight,
-    formatHour,
-    getHourFromClick,
+    formatSlotLabel,
+    getSlotStartFromClick,
   };
 };
