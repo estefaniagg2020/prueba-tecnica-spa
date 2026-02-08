@@ -1,7 +1,7 @@
 import type { ScheduleBlock, Therapist } from '../types';
 import { useScheduleStore } from '../stores/schedule';
 
-export function generateAllSchedules(therapists: Therapist[], baseDate: Date = new Date()) {
+export const generateAllSchedules = (therapists: Therapist[], baseDate: Date = new Date()) => {
     const store = useScheduleStore();
     
     // Clear existing for a clean slate if needed, or just append. 
@@ -101,11 +101,11 @@ export function generateAllSchedules(therapists: Therapist[], baseDate: Date = n
         }
     });
 
-    blocks.forEach(b => store.addBlock(b));
-}
+    blocks.forEach(block => store.addBlock(block));
+};
 
-function setTime(date: Date, h: number, m: number) {
+const setTime = (date: Date, h: number, m: number) => {
     const d = new Date(date);
     d.setHours(h, m, 0);
     return d.toISOString();
-}
+};

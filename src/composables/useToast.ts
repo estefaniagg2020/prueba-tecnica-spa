@@ -11,8 +11,8 @@ export interface Toast {
 
 const toasts = ref<Toast[]>([]);
 
-export function useToast() {
-    function addToast(message: string, type: ToastType = 'info', duration: number = 3000) {
+export const useToast = () => {
+    const addToast = (message: string, type: ToastType = 'info', duration: number = 3000) => {
         const id = crypto.randomUUID();
         const toast: Toast = { id, message, type, duration };
         toasts.value.push(toast);
@@ -23,11 +23,11 @@ export function useToast() {
             }, duration);
         }
         return id;
-    }
+    };
 
-    function removeToast(id: string) {
+    const removeToast = (id: string) => {
         toasts.value = toasts.value.filter(t => t.id !== id);
-    }
+    };
 
     return {
         toasts,

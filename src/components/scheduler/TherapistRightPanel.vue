@@ -1,12 +1,10 @@
 <template>
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
-    <!-- Header -->
     <div class="p-4 border-b border-gray-100 flex items-center justify-between">
       <h3 class="font-bold text-gray-800 text-lg">Equipo</h3>
       <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full font-medium">{{ therapists.length }}</span>
     </div>
 
-    <!-- Search/Filter (Optional placeholder) -->
     <div class="p-3">
         <input 
             type="text" 
@@ -15,7 +13,6 @@
         />
     </div>
 
-    <!-- List -->
     <div class="flex-1 overflow-y-auto px-2 pb-2 space-y-1 custom-scrollbar">
       <button 
         v-for="therapist in therapists"
@@ -26,7 +23,7 @@
             ? 'bg-spa-teal/10 border border-spa-teal/20 shadow-sm' 
             : 'hover:bg-gray-50 border border-transparent'"
       >
-        <Avatar :name="therapist.name" :src="therapist.photoUrl" :size="40" class="ring-2 ring-white shadow-sm" />
+        <Avatar :name="therapist.name" :src="therapist.photoUrl" :size="40" :href="therapist.linkedInUrl" class="ring-2 ring-white shadow-sm" />
         <div class="flex-1 min-w-0">
             <div class="font-bold text-sm truncate" :class="selectedId === therapist.id ? 'text-spa-teal' : 'text-gray-700'">
                 {{ therapist.name }}
@@ -38,8 +35,7 @@
         </div>
       </button>
     </div>
-    
-    <!-- Footer / Add Button -->
+
     <div class="p-4 border-t border-gray-100 bg-gray-50/50">
         <RouterLink to="/therapists" class="w-full flex items-center justify-center gap-2 p-2 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 hover:border-spa-teal hover:text-spa-teal transition-colors text-sm font-medium">
             + Gestionar Equipo

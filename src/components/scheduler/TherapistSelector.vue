@@ -5,7 +5,7 @@
       class="flex items-center gap-3 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:border-spa-teal transition-colors shadow-sm min-w-[200px]"
     >
       <div v-if="selectedTherapist" class="flex items-center gap-3">
-        <Avatar :src="selectedTherapist.photoUrl" :name="selectedTherapist.name" :size="32" />
+        <Avatar :src="selectedTherapist.photoUrl" :name="selectedTherapist.name" :size="32" :href="selectedTherapist.linkedInUrl" />
         <span class="text-sm font-medium text-gray-700">{{ selectedTherapist.name }}</span>
       </div>
       <div v-else class="flex items-center gap-3">
@@ -24,7 +24,7 @@
         @click="select(therapist)"
         class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0"
       >
-        <Avatar :src="therapist.photoUrl" :name="therapist.name" :size="32" />
+        <Avatar :src="therapist.photoUrl" :name="therapist.name" :size="32" :href="therapist.linkedInUrl" />
         <span class="text-sm text-gray-700">{{ therapist.name }}</span>
       </div>
     </div>
@@ -51,12 +51,9 @@ const selectedTherapist = ref<Therapist | undefined>(
     props.therapists.find(t => t.id === props.selectedId)
 );
 
-function select(t: Therapist) {
+const select = (t: Therapist) => {
   selectedTherapist.value = t;
   emit('select', t.id);
   isOpen.value = false;
-}
-
-// Simple click outside logic handling involves more code or a transparent overlay. 
-// For simplicity in this iteration, I will use a simple blur-like behavior or just toggle.
+};
 </script>

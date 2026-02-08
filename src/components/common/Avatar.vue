@@ -1,22 +1,29 @@
 <template>
-  <div 
+  <component
+    :is="href ? 'a' : 'div'"
+    :href="href || undefined"
+    :target="href ? '_blank' : undefined"
+    :rel="href ? 'noopener noreferrer' : undefined"
     class="rounded-full border-2 border-white shadow-sm flex items-center justify-center overflow-hidden object-cover shrink-0"
-    :class="{ 'bg-gray-200': !src && !name }"
+    :class="[
+      { 'bg-gray-200': !effectiveSrc && !name },
+      href ? 'hover:opacity-90 transition-opacity' : ''
+    ]"
     :style="{ 
       width: size + 'px', 
       height: size + 'px',
-      backgroundColor: (!src || hasError) && name ? bgColor : undefined
+      backgroundColor: (!effectiveSrc || hasError) && name ? bgColor : undefined
     }"
   >
     <img 
-      v-if="src && !hasError" 
-      :src="src" 
+      v-if="effectiveSrc && !hasError" 
+      :src="effectiveSrc" 
       alt="Avatar" 
       class="w-full h-full object-cover"
       @error="hasError = true"
     />
     <span 
-      v-if="!src || hasError" 
+      v-if="!effectiveSrc || hasError" 
       class="font-bold" 
       :style="{ 
         fontSize: size * 0.4 + 'px',
@@ -25,31 +32,35 @@
     >
       {{ initials }}
     </span>
-  </div>
+  </component>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { getAvatarUrlForName } from '@/utils/avatar';
 
 const props = defineProps<{
   src?: string;
   name?: string;
   size?: number;
+  /** Si se indica, el avatar es un enlace (p. ej. perfil LinkedIn). */
+  href?: string;
 }>();
+
+const effectiveSrc = computed(() => props.src || (props.name ? getAvatarUrlForName(props.name, props.size || 40) : undefined));
 
 const hasError = ref(false);
 const size = computed(() => props.size || 40);
 
 const initials = computed(() => {
   return props.name 
-    ? props.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() 
+    ? props.name.split(' ').map(namePart => namePart[0]).join('').substring(0, 2).toUpperCase() 
     : '??';
 });
 
 const colorScheme = computed(() => {
   if (!props.name) return { bg: '#e5e7eb', text: '#6b7280' };
-  
-  // Simple hash function
+
   let hash = 0;
   for (let i = 0; i < props.name.length; i++) {
     hash = props.name.charCodeAt(i) + ((hash << 5) - hash);
@@ -65,7 +76,7 @@ const colorScheme = computed(() => {
 const bgColor = computed(() => colorScheme.value.bg);
 const textColor = computed(() => colorScheme.value.text);
 
-watch(() => props.src, () => {
-    hasError.value = false;
+watch([() => props.src, () => props.name], () => {
+  hasError.value = false;
 });
 </script>

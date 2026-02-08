@@ -1,26 +1,25 @@
 <template>
   <div class="h-full flex flex-col md:flex-row gap-6 p-4">
-    <!-- Main Left Area (Calendar) -->
+
     <div class="flex-1 flex flex-col h-full min-w-0 gap-4">
         
-        <!-- Pending Approvals Alert (Manager Only) -->
         <div 
-          v-if="authStore.currentRole === 'manager' && pendingBlocksCount > 0"
+          v-if="authStore.currentRole === ROLE_MANAGER && pendingBlocksCount > 0"
           class="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center justify-between shadow-sm animate-pulse"
         >
-           <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3">
              <span class="text-2xl">🔔</span>
              <div>
-               <p class="text-sm font-bold text-yellow-800">Tienes {{ pendingBlocksCount }} cambios pendientes de aprobar</p>
-               <p class="text-xs text-yellow-700">Revisa los bloques marcados con ⏳</p>
+               <p class="text-sm font-bold text-yellow-800">{{ SCHEDULER_CONSTANTS.PENDING_CHANGES_MSG(pendingBlocksCount) }}</p>
+               <p class="text-xs text-yellow-700">{{ SCHEDULER_CONSTANTS.REVIEW_HINT }}</p>
              </div>
            </div>
            <button class="px-3 py-1.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 text-xs font-bold rounded-lg transition-colors cursor-pointer" @click="handleReviewClick">
-             Revisar
+             {{ SCHEDULER_CONSTANTS.REVISE_BUTTON }}
            </button>
         </div>
 
-        <!-- Header Card -->
+
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 md:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
               <h2 class="text-lg md:text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -32,7 +31,6 @@
               </p>
             </div>
 
-            <!-- Calendar Controls (Imported) -->
              <CalendarHeader 
                 :current-date="currentDate"
                 :current-view="view"
@@ -44,12 +42,13 @@
              />
         </div>
 
-        <!-- content area -->
+
         <div class="flex-1 min-h-0 relative bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
             <WeekView 
                 v-if="view === 'week'"
                 :week-days="weekDays"
                 :blocks="filteredBlocks"
+                v-bind="gridSettings"
                 @block-click="handleEditBlock"
                 @grid-click="handleGridClick"
             />
@@ -58,6 +57,7 @@
                 :date="currentDate"
                 :blocks="filteredBlocks"
                 :therapists="filteredTherapists"
+                v-bind="gridSettings"
                 @block-click="handleEditBlock"
                 @grid-click="handleGridClick"
             />
@@ -69,7 +69,7 @@
                 @grid-click="handleGridClick"
             />
             
-             <!-- Floating Action Button -->
+
             <button 
               @click="openAddModal"
               class="absolute bottom-6 right-6 w-12 h-12 bg-spa-teal text-white rounded-xl shadow-lg shadow-spa-teal/20 flex items-center justify-center text-2xl hover:scale-105 transition-transform hover:bg-[#005a5d]"
@@ -79,9 +79,46 @@
         </div>
     </div>
 
-    <!-- Right Sidebar (Team) -->
     <div class="w-full md:w-72 hidden md:flex flex-col h-full gap-4">
-       <!-- Spa Selector -->
+       <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Vista del horario</label>
+          <div class="space-y-3">
+            <div>
+              <label class="text-[10px] text-gray-500 block mb-0.5">Hora inicio</label>
+              <input
+                type="number"
+                min="0"
+                max="24"
+                :value="schedulerSettings.startHour"
+                @input="updateStartHour($event)"
+                class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-spa-teal/20"
+              />
+            </div>
+            <div>
+              <label class="text-[10px] text-gray-500 block mb-0.5">Hora fin</label>
+              <input
+                type="number"
+                min="0"
+                max="24"
+                :value="schedulerSettings.endHour"
+                @input="updateEndHour($event)"
+                class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-spa-teal/20"
+              />
+            </div>
+            <div>
+              <label class="text-[10px] text-gray-500 block mb-0.5">Altura por hora (px)</label>
+              <input
+                type="number"
+                min="30"
+                max="200"
+                :value="schedulerSettings.pixelsPerHour"
+                @input="updatePixelsPerHour($event)"
+                class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-spa-teal/20"
+              />
+            </div>
+          </div>
+       </div>
+
        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Spa / Centro</label>
           <select 
@@ -100,25 +137,26 @@
           @select="handleTherapistSelect"
        />
 
-       <!-- Utils Card -->
+
        <div class="bg-gradient-to-br from-spa-primary/5 to-spa-peach/10 rounded-2xl p-4 border border-spa-peach/20">
-           <h4 class="font-bold text-spa-primary text-sm mb-2">Acciones Rápidas</h4>
+           <h4 class="font-bold text-spa-primary text-sm mb-2">{{ SCHEDULER_CONSTANTS.QUICK_ACTIONS_TITLE }}</h4>
            <button 
                v-if="blocks.length === 0"
                @click="regenerate" 
                class="text-xs text-spa-primary hover:underline flex items-center gap-1 cursor-pointer"
            >
-             ⚡ Generar datos de prueba
+             {{ SCHEDULER_CONSTANTS.GENERATE_TEST_DATA }}
            </button>
            <div class="text-[10px] text-gray-400 mt-2">
-             Selecciona una franja horaria en el calendario para añadir un turno rápidamente.
+             {{ SCHEDULER_CONSTANTS.QUICK_ADD_HINT }}
            </div>
        </div>
     </div>
 
-    <!-- Mobile Drawer for Therapist List (Optional, simpler if hidden on mobile or toggleable, for now just hidden on small screens is acceptable MVP or add a toggle) -->
+
 
     <BlockEditorModal 
+        :key="modalOpenKey"
         :is-open="isModalOpen"
         :edit-block="editingBlock"
         :initial-date="selectedDate"
@@ -131,14 +169,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useTherapistStore } from '@/stores/therapist';
 import { useScheduleStore } from '@/stores/schedule';
 import { useAuthStore } from '@/stores/auth';
 import { useSpaStore } from '@/stores/spa';
+import { useSchedulerSettingsStore } from '@/stores/schedulerSettings';
 import { useToast } from '@/composables/useToast';
 import { useCalendar } from '@/composables/useCalendar';
+import { useScheduleActions } from '@/composables/useScheduleActions';
+import { SCHEDULER_CONSTANTS } from '@/data/constants';
+import { AUTH_CONFIG } from '@/data/authConfig';
 import { generateAllSchedules } from '@/utils/scheduleGenerator';
 import TherapistRightPanel from '@/components/scheduler/TherapistRightPanel.vue';
 import CalendarHeader from '@/components/scheduler/CalendarHeader.vue';
@@ -148,181 +190,153 @@ import MonthView from '@/components/scheduler/MonthView.vue';
 import BlockEditorModal from '@/components/scheduler/BlockEditorModal.vue';
 import type { ScheduleBlock } from '@/types';
 
-// Stores
 const therapistStore = useTherapistStore();
 const scheduleStore = useScheduleStore();
 const authStore = useAuthStore();
 const spaStore = useSpaStore();
+const schedulerSettingsStore = useSchedulerSettingsStore();
+const schedulerSettings = storeToRefs(schedulerSettingsStore);
+const ROLE_MANAGER = AUTH_CONFIG.ROLE_MANAGER;
 const { addToast } = useToast();
 const { blocks } = storeToRefs(scheduleStore);
+const { saveBlock: saveScheduleBlock } = useScheduleActions();
 
-// Calendar Logic
+
 const { currentDate, view, weekDays, next, prev, setToday } = useCalendar();
 
-// State
-const selectedTherapistId = ref<string>('');
+
+const userSelectedTherapistId = ref<string>('');
 const isModalOpen = ref(false);
+const modalOpenKey = ref(0);
 const editingBlock = ref<ScheduleBlock | undefined>(undefined);
 const initialBlockHour = ref<number | undefined>(undefined);
 const selectedDate = ref<Date | undefined>(undefined);
 
-// Initialization
 onMounted(() => {
     therapistStore.initialize();
     scheduleStore.initialize();
     spaStore.initialize();
-    
-    // Auto-generate if empty
+    schedulerSettingsStore.initialize();
+
     if (scheduleStore.blocks.length === 0 && therapistStore.therapists.length > 0) {
         generateAllSchedules(therapistStore.therapists, currentDate.value);
     }
-    
-    updateSelectionForSpa();
 });
+
+const updateStartHour = (event: Event) => {
+  const n = Number((event.target as HTMLInputElement).value);
+  if (!Number.isNaN(n)) schedulerSettingsStore.updateSettings({ startHour: n });
+};
+
+const updateEndHour = (event: Event) => {
+  const n = Number((event.target as HTMLInputElement).value);
+  if (!Number.isNaN(n)) schedulerSettingsStore.updateSettings({ endHour: n });
+};
+
+const updatePixelsPerHour = (event: Event) => {
+  const n = Number((event.target as HTMLInputElement).value);
+  if (!Number.isNaN(n)) schedulerSettingsStore.updateSettings({ pixelsPerHour: n });
+};
+
+const gridSettings = computed(() => ({
+  startHour: schedulerSettings.startHour.value,
+  endHour: schedulerSettings.endHour.value,
+  pixelsPerHour: schedulerSettings.pixelsPerHour.value,
+}));
 
 const filteredTherapists = computed(() => {
-  return therapistStore.therapists.filter(t => t.spaId === spaStore.currentSpaId || (!t.spaId && spaStore.currentSpaId === 'spa-1'));
+  return therapistStore.therapists.filter(therapist => therapist.spaId === spaStore.currentSpaId || (!therapist.spaId && spaStore.currentSpaId === 'spa-1'));
 });
 
-// Watch current Spa to reset selection if needed
-watch(() => spaStore.currentSpaId, () => {
-    updateSelectionForSpa();
-});
-
-function updateSelectionForSpa() {
+const selectedTherapistId = computed({
+  get() {
+    const id = userSelectedTherapistId.value;
     const available = filteredTherapists.value;
-    if (available.length > 0) {
-        if (!available.find(t => t.id === selectedTherapistId.value)) {
-             selectedTherapistId.value = available[0].id;
-        }
-    } else {
-        selectedTherapistId.value = '';
-    }
-}
+    return available.some(t => t.id === id) ? id : (available[0]?.id ?? '');
+  },
+  set(id: string) {
+    userSelectedTherapistId.value = id;
+  }
+});
 
 const currentTherapist = computed(() => 
-    therapistStore.therapists.find(t => t.id === selectedTherapistId.value)
+    therapistStore.therapists.find(therapist => therapist.id === selectedTherapistId.value)
 );
 
 const filteredBlocks = computed(() => {
      if (view.value === 'day') {
-         // Return blocks belonging to ANY therapist in the current Spa view context
-         // Filter by therapist IDs present in filteredTherapists
-         const therapistIds = filteredTherapists.value.map(t => t.id);
-         return blocks.value.filter(b => therapistIds.includes(b.therapistId));
+         const therapistIds = filteredTherapists.value.map(therapist => therapist.id);
+         return blocks.value.filter(block => therapistIds.includes(block.therapistId));
      }
 
     if (!selectedTherapistId.value) return [];
-    return blocks.value.filter(b => b.therapistId === selectedTherapistId.value);
+    return blocks.value.filter(block => block.therapistId === selectedTherapistId.value);
 });
 
 const pendingBlocksCount = computed(() => {
-    return blocks.value.filter(b => b.status === 'pending').length;
+    return blocks.value.filter(block => block.status === 'pending').length;
 });
 
-function handleTherapistSelect(id: string) {
+const handleTherapistSelect = (id: string) => {
     selectedTherapistId.value = id;
-}
+};
 
-function openAddModal() {
+const openAddModal = () => {
     editingBlock.value = undefined;
     initialBlockHour.value = undefined;
-    selectedDate.value = new Date(currentDate.value); 
+    selectedDate.value = new Date(currentDate.value);
+    modalOpenKey.value += 1;
     isModalOpen.value = true;
-}
+};
 
-function handleGridClick(data: { date: Date, hour: number, therapistId?: string }) {
+const handleGridClick = (data: { date: Date, hour: number, therapistId?: string }) => {
     editingBlock.value = undefined;
     initialBlockHour.value = data.hour;
     selectedDate.value = data.date;
-    
+
     if (data.therapistId) {
         selectedTherapistId.value = data.therapistId;
     }
 
+    modalOpenKey.value += 1;
     isModalOpen.value = true;
-}
+};
 
-function handleEditBlock(block: ScheduleBlock) {
+const handleEditBlock = (block: ScheduleBlock) => {
     editingBlock.value = block;
+    modalOpenKey.value += 1;
     isModalOpen.value = true;
-}
+};
 
-function closeModal() {
+const closeModal = () => {
     isModalOpen.value = false;
     editingBlock.value = undefined;
-}
+};
 
-function saveBlock(data: Partial<ScheduleBlock>) {
-    if (!selectedTherapistId.value) return;
+const saveBlock = (data: Partial<ScheduleBlock>) => {
+    saveScheduleBlock({
+        data,
+        therapistId: selectedTherapistId.value,
+        currentDate: currentDate.value,
+        selectedDate: selectedDate.value,
+        editingBlock: editingBlock.value,
+        onSuccess: closeModal
+    });
+};
 
-    // Detemine Status based on Role
-    const newStatus = authStore.currentRole === 'manager' ? 'confirmed' : 'pending';
-
-    if (authStore.currentRole === 'employee') {
-        addToast('Cambios guardados. Esperando confirmación del manager.', 'info');
-    } else {
-        addToast('Cambios guardados correctamente', 'success');
-    }
-
-    if (editingBlock.value) {
-        // Update
-        const originalStart = new Date(editingBlock.value.start);
-        const originalEnd = new Date(editingBlock.value.end); 
-        
-        const [startH, startM] = (data.start as string).split(':').map(Number);
-        const [endH, endM] = (data.end as string).split(':').map(Number);
-
-        originalStart.setHours(startH, startM);
-        originalEnd.setHours(endH, endM);
-        
-        scheduleStore.updateBlock(editingBlock.value.id, {
-            ...data,
-            start: originalStart.toISOString(),
-            end: originalEnd.toISOString(),
-            status: newStatus 
-        });
-    } else {
-        // Create
-        const date = selectedDate.value ? new Date(selectedDate.value) : new Date(currentDate.value);
-        
-        const [startH, startM] = (data.start as string).split(':').map(Number);
-        const [endH, endM] = (data.end as string).split(':').map(Number);
-        
-        const start = new Date(date);
-        start.setHours(startH, startM);
-        
-        const end = new Date(date);
-        end.setHours(endH, endM);
-
-        scheduleStore.addBlock({
-            therapistId: selectedTherapistId.value,
-            type: data.type as any,
-            title: data.title || 'Evento',
-            description: data.description,
-            start: start.toISOString(),
-            end: end.toISOString(),
-            status: newStatus
-        });
-    }
-    closeModal();
-}
-
-function deleteBlock() {
+const deleteBlock = () => {
     if (editingBlock.value) {
         scheduleStore.deleteBlock(editingBlock.value.id);
         closeModal();
     }
-}
+};
 
-function regenerate() {
-    if(confirm('¿Generar nuevos datos aleatorios? Esto borrará los cambios actuales.')) {
-        // Clear all (optional, or just append)
-        // scheduleStore.blocks = []; // If we wanted to clear
+const regenerate = () => {
+    if(confirm(SCHEDULER_CONSTANTS.REGENERATE_CONFIRM)) {
         generateAllSchedules(therapistStore.therapists, currentDate.value);
     }
-}
-function handleReviewClick() {
-    addToast('Esta funcionalidad aprobaría todos los cambios (simulado)', 'success');
-}
+};
+const handleReviewClick = () => {
+    addToast(SCHEDULER_CONSTANTS.APPROVE_SIMULATION_MSG, 'success');
+};
 </script>

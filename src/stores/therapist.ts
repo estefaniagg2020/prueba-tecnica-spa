@@ -1,113 +1,33 @@
 import { defineStore } from 'pinia';
-import { ref, watch } from 'vue';
-import type { Therapist } from '@/types';
+import { ref } from 'vue';
+import type { Therapist } from '@/interfaces';
+import { DEFAULT_THERAPISTS } from '@/data/therapists';
+import { INDEX_NOT_FOUND } from '@/utils/array';
+import { generatePastelColor } from '@/utils/color';
 
-// Helper to generate a random pastel color
-function generatePastelColor() {
-  const hue = Math.floor(Math.random() * 360);
-  return `hsl(${hue}, 70%, 85%)`;
-}
-
-const DEFAULT_THERAPISTS: Therapist[] = [
-  {
-    id: '1',
-    name: 'Vicente Vicente Mulero',
-    photoUrl: 'https://media.licdn.com/dms/image/v2/D4D03AQH9mUPVPbbYAg/profile-displayphoto-crop_800_800/B4DZrCbBwOJMAI-/0/1764198457439?e=1772064000&v=beta&t=EoPQ08z8ojMmJ0gYD7th74S6Ihtv3C03bb4XpXEKpK4',
-    phoneNumber: '+34 600 000 001',
-    email: 'vicente@spalopia.com',
-    weeklyHours: 40,
-    color: '#D1E8E2',
-    role: 'therapist',
-    spaId: 'spa-1'
-  },
-  {
-    id: '2',
-    name: 'Marcel-lí P.',
-    photoUrl: 'https://randomuser.me/api/portraits/men/45.jpg',
-    phoneNumber: '+34 600 000 002',
-    email: 'marcel@spalopia.com',
-    weeklyHours: 40,
-    color: '#D9E2F3',
-    role: 'therapist',
-    spaId: 'spa-1'
-  },
-  {
-    id: '3',
-    name: 'Eleazar Pérez Arencibia',
-    photoUrl: 'https://media.licdn.com/dms/image/v2/C4D03AQGWscT2sfFZFg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1587233316749?e=1772064000&v=beta&t=BoevnATWqz3u2uf39vK6Wffru4tp2gRq-8arrzkpxsM',
-    phoneNumber: '+34 600 000 003',
-    email: 'eleazar@spalopia.com',
-    weeklyHours: 40,
-    color: '#F9E4D4',
-    role: 'therapist',
-    spaId: 'spa-1'
-  },
-  {
-    id: '4',
-    name: 'Rayco Alonso de la Rosa',
-    photoUrl: 'https://randomuser.me/api/portraits/men/11.jpg',
-    phoneNumber: '+34 600 000 004',
-    email: 'rayco@spalopia.com',
-    weeklyHours: 35,
-    color: '#E2D4F9',
-    role: 'therapist',
-    spaId: 'spa-2'
-  },
-  {
-    id: '5',
-    name: 'Antonio José Medina Rivero',
-    photoUrl: 'https://media.licdn.com/dms/image/v2/C5603AQGB4YDhpsw9Jg/profile-displayphoto-crop_800_800/0/1516877478062?e=1772064000&v=beta&t=hSNtAuwg55kIHaPT27Ui3ebbnuFsZLgfBNhmfTIxw2k',
-    phoneNumber: '+34 600 000 005',
-    email: 'antonio@spalopia.com',
-    weeklyHours: 40,
-    color: '#FFD1DC',
-    role: 'manager',
-    spaId: 'spa-2'
-  },
-  {
-    id: '6',
-    name: 'Natalia Ramos García',
-    photoUrl: 'https://media.licdn.com/dms/image/v2/D4D03AQH9mUPVPbbYAg/profile-displayphoto-scale_200_200/B4DZrCbBwOJMAY-/0/1764198457522?e=1772064000&v=beta&t=e37EyAYMkPKbgN4zPGGWvZ4TzTuz_IY9EXHBNrM1rMQ',
-    phoneNumber: '+34 600 000 006',
-    email: 'natalia@spalopia.com',
-    weeklyHours: 30,
-    color: '#C1E1C1', // Pastel Green
-    role: 'therapist',
-    spaId: 'spa-3'
-  },
-  {
-    id: '7',
-    name: 'Javier García Cabrera',
-    photoUrl: '',
-    phoneNumber: '+34 600 000 007',
-    email: 'javier.garcia@spalopia.com',
-    weeklyHours: 40,
-    color: '#AEC6CF', // Pastel Blue
-    role: 'therapist',
-    spaId: 'spa-3'
-  },
-  {
-    id: '8',
-    name: 'Javier Albelo',
-    photoUrl: 'https://randomuser.me/api/portraits/men/76.jpg',
-    phoneNumber: '+34 600 000 008',
-    email: 'javier.albelo@spalopia.com',
-    weeklyHours: 20,
-    color: '#B39EB5', // Pastel Purple
-    role: 'therapist',
-    spaId: 'spa-3'
-  }
-];
+const STORAGE_KEY = 'spa-therapists-final';
 
 export const useTherapistStore = defineStore('therapist', () => {
   const therapists = ref<Therapist[]>([]);
 
-  // Load from local storage or set defaults
-  function initialize() {
-    const stored = localStorage.getItem('spa-therapists-final');
+  const persistTherapists = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(therapists.value));
+  };
+
+  const initialize = () => {
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        therapists.value = JSON.parse(stored);
+        const parsed = JSON.parse(stored) as Therapist[];
+        const defaultsById = new Map(DEFAULT_THERAPISTS.map((t) => [t.id, t]));
+        therapists.value = parsed.map((t) => {
+          const def = defaultsById.get(t.id);
+          if (!def) return t;
+          return {
+            ...t,
+            linkedInUrl: t.linkedInUrl ?? def.linkedInUrl,
+          };
+        });
       } catch (e) {
         console.error('Error parsing therapists from local storage', e);
         therapists.value = DEFAULT_THERAPISTS;
@@ -115,14 +35,9 @@ export const useTherapistStore = defineStore('therapist', () => {
     } else {
       therapists.value = DEFAULT_THERAPISTS;
     }
-  }
+  };
 
-  // Persist changes
-  watch(therapists, (newVal) => {
-    localStorage.setItem('spa-therapists-final', JSON.stringify(newVal));
-  }, { deep: true });
-
-  function addTherapist(therapist: Omit<Therapist, 'id' | 'color'> & { color?: string }) {
+  const addTherapist = (therapist: Omit<Therapist, 'id' | 'color'> & { color?: string }) => {
     const newTherapist: Therapist = {
       ...therapist,
       id: crypto.randomUUID(),
@@ -130,22 +45,25 @@ export const useTherapistStore = defineStore('therapist', () => {
       role: 'therapist'
     };
     therapists.value.push(newTherapist);
-  }
+    persistTherapists();
+  };
 
-  function updateTherapist(id: string, updates: Partial<Therapist>) {
-    const index = therapists.value.findIndex(t => t.id === id);
-    if (index !== -1) {
+  const updateTherapist = (id: string, updates: Partial<Therapist>) => {
+    const index = therapists.value.findIndex(therapist => therapist.id === id);
+    if (index !== INDEX_NOT_FOUND) {
       therapists.value[index] = { ...therapists.value[index], ...updates };
+      persistTherapists();
     }
-  }
+  };
 
-  function deleteTherapist(id: string) {
-    therapists.value = therapists.value.filter(t => t.id !== id);
-  }
+  const deleteTherapist = (id: string) => {
+    therapists.value = therapists.value.filter(therapist => therapist.id !== id);
+    persistTherapists();
+  };
 
-  function getTherapistById(id: string) {
-    return therapists.value.find(t => t.id === id);
-  }
+  const getTherapistById = (id: string) => {
+    return therapists.value.find(therapist => therapist.id === id);
+  };
 
   return {
     therapists,

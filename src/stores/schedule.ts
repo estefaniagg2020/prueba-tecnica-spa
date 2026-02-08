@@ -1,12 +1,19 @@
 import { defineStore } from 'pinia';
-import { ref, watch } from 'vue';
-import type { ScheduleBlock } from '@/types';
+import { ref } from 'vue';
+import type { ScheduleBlock } from '@/interfaces';
+import { INDEX_NOT_FOUND } from '@/utils/array';
+
+const STORAGE_KEY = 'spa-schedule-blocks';
 
 export const useScheduleStore = defineStore('schedule', () => {
   const blocks = ref<ScheduleBlock[]>([]);
 
-  function initialize() {
-    const stored = localStorage.getItem('spa-schedule-blocks');
+  const persistBlocks = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(blocks.value));
+  };
+
+  const initialize = () => {
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
         blocks.value = JSON.parse(stored);
@@ -15,36 +22,35 @@ export const useScheduleStore = defineStore('schedule', () => {
         blocks.value = [];
       }
     }
-  }
+  };
 
-  watch(blocks, (newVal) => {
-    localStorage.setItem('spa-schedule-blocks', JSON.stringify(newVal));
-  }, { deep: true });
-
-  function addBlock(block: Omit<ScheduleBlock, 'id'>) {
+  const addBlock = (block: Omit<ScheduleBlock, 'id'>) => {
     const newBlock: ScheduleBlock = {
       ...block,
       id: crypto.randomUUID(),
     };
     blocks.value.push(newBlock);
-  }
+    persistBlocks();
+  };
 
-  function updateBlock(id: string, updates: Partial<ScheduleBlock>) {
-    const index = blocks.value.findIndex(b => b.id === id);
-    if (index !== -1) {
+  const updateBlock = (id: string, updates: Partial<ScheduleBlock>) => {
+    const index = blocks.value.findIndex(block => block.id === id);
+    if (index !== INDEX_NOT_FOUND) {
       blocks.value[index] = { ...blocks.value[index], ...updates };
+      persistBlocks();
     }
-  }
+  };
 
-  function deleteBlock(id: string) {
-    blocks.value = blocks.value.filter(b => b.id !== id);
-  }
+  const deleteBlock = (id: string) => {
+    blocks.value = blocks.value.filter(block => block.id !== id);
+    persistBlocks();
+  };
 
-  function getBlocksByTherapist(therapistId: string) {
-    return blocks.value.filter(b => b.therapistId === therapistId);
-  }
+  const getBlocksByTherapist = (therapistId: string) => {
+    return blocks.value.filter(block => block.therapistId === therapistId);
+  };
 
-  // Helper to check for overlaps could be added here later
+
 
   return {
     blocks,

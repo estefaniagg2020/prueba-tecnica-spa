@@ -33,37 +33,37 @@ import { useToast, type ToastType } from '@/composables/useToast';
 
 const { toasts, removeToast } = useToast();
 
-function getParams(type: ToastType) {
-    switch (type) {
-        case 'success':
-            return {
-                classes: 'bg-green-50/95 border-green-200',
-                icon: '✅',
-                title: 'Éxito',
-                titleClass: 'text-green-800'
-            };
-        case 'error':
-             return {
-                classes: 'bg-red-50/95 border-red-200',
-                icon: '❌',
-                title: 'Error',
-                titleClass: 'text-red-800'
-            };
-        case 'warning':
-             return {
-                classes: 'bg-yellow-50/95 border-yellow-200',
-                icon: '⚠️',
-                title: 'Advertencia',
-                titleClass: 'text-yellow-800'
-            };
-        case 'info':
-        default:
-             return {
-                classes: 'bg-blue-50/95 border-blue-200',
-                icon: 'ℹ️',
-                title: 'Información',
-                titleClass: 'text-blue-800'
-            };
-    }
-}
+const getParams = (type: ToastType) => {
+  switch (type) {
+    case 'success':
+      return {
+        classes: 'bg-green-50/95 border-green-200',
+        icon: '✅',
+        title: 'Éxito',
+        titleClass: 'text-green-800'
+      };
+    case 'error':
+      return {
+        classes: 'bg-red-50/95 border-red-200',
+        icon: '❌',
+        title: 'Error',
+        titleClass: 'text-red-800'
+      };
+    case 'warning':
+      return {
+        classes: 'bg-yellow-50/95 border-yellow-200',
+        icon: '⚠️',
+        title: 'Advertencia',
+        titleClass: 'text-yellow-800'
+      };
+    case 'info':
+    default:
+      return {
+        classes: 'bg-blue-50/95 border-blue-200',
+        icon: 'ℹ️',
+        title: 'Información',
+        titleClass: 'text-blue-800'
+      };
+  }
+};
 </script>

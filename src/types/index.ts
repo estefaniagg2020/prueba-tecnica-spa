@@ -24,6 +24,7 @@ export interface Therapist {
   id: string;
   name: string;
   photoUrl: string;
+  linkedInUrl?: string;
   phoneNumber: string;
   email: string;
   weeklyHours: number; // e.g., 20 or 40

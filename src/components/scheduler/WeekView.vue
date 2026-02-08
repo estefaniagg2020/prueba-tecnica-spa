@@ -1,59 +1,53 @@
 <template>
   <div class="flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-    <!-- Header Row -->
     <div class="flex border-b border-gray-200 bg-gray-50">
-      <div class="w-16 flex-shrink-0 border-r border-gray-200"></div> <!-- Time Gutter Header -->
+      <div class="w-16 shrink-0 border-r border-gray-200"></div>
       <div 
         v-for="day in weekDays" 
         :key="day.toISOString()" 
         class="flex-1 py-3 text-center border-r border-gray-200 last:border-0"
-        :class="{ 'bg-spa-teal/5': isToday(day) }"
+        :class="{ 'bg-spa-teal/5': dates.isToday(day) }"
       >
-        <div class="text-xs uppercase font-semibold text-gray-500">{{ formatDayName(day) }}</div>
-        <div class="text-xl font-bold text-gray-800" :class="{ 'text-spa-teal': isToday(day) }">
+        <div class="text-xs uppercase font-semibold text-gray-500">{{ dates.formatDayName(day) }}</div>
+        <div class="text-xl font-bold text-gray-800" :class="{ 'text-spa-teal': dates.isToday(day) }">
             {{ day.getDate() }}
         </div>
       </div>
     </div>
 
-    <!-- Scrollable Grid -->
-    <div class="flex-1 overflow-y-auto relative custom-scrollbar">
-       <div class="flex relative" :style="{ height: totalHeight + 'px' }">
-         
-         <!-- Time Gutter -->
-         <div class="w-16 flex-shrink-0 border-r border-gray-200 bg-white z-10 sticky left-0">
+    <div class="flex-1 min-h-0 overflow-y-auto relative custom-scrollbar">
+       <div class="flex relative" :style="{ height: gridContentHeight + 'px' }">
+         <div class="w-16 shrink-0 border-r border-gray-200 bg-white z-10 sticky left-0">
            <div 
-             v-for="hour in hours" 
+             v-for="(hour) in gridHours" 
              :key="hour" 
              class="absolute w-full text-center text-xs text-gray-400 -mt-2.5"
-             :style="{ top: (hour - startHour) * pixelsPerHour + 'px' }"
+             :style="{ top: topOffset + (hour - props.startHour) * props.pixelsPerHour + 'px' }"
            >
-             {{ formatHour(hour) }}
+             {{ grid.formatHour(hour) }}
            </div>
          </div>
 
-         <!-- Day Columns -->
          <div 
             v-for="day in weekDays" 
             :key="day.toISOString()"
             class="flex-1 relative border-r border-gray-100 last:border-0 hover:bg-gray-50 transition-colors cursor-crosshair"
             @click="handleGridClick($event, day)"
          >
-            <!-- Grid Lines -->
             <div 
-                v-for="hour in hours" 
+                v-for="(hour) in gridHours" 
                 :key="hour"
                 class="absolute w-full border-b border-gray-100 pointer-events-none"
-                :style="{ top: (hour - startHour) * pixelsPerHour + 'px' }"
+                :style="{ top: topOffset + (hour - props.startHour) * props.pixelsPerHour + 'px' }"
             ></div>
 
-            <!-- Blocks -->
             <BlockCard 
-                v-for="block in getBlocksForDay(day)"
+                v-for="block in filterBlocksByDay(props.blocks, day)"
                 :key="block.id"
                 :block="block"
-                :start-hour="startHour"
-                :pixels-per-hour="pixelsPerHour"
+                :start-hour="props.startHour"
+                :pixels-per-hour="props.pixelsPerHour"
+                :top-offset="topOffset"
                 @click="$emit('block-click', block)"
             />
          </div>
@@ -65,66 +59,47 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useScheduleGrid } from '@/composables/useScheduleGrid';
+import { useScheduleDates } from '@/composables/useScheduleDates';
+import { filterBlocksByDay } from '@/composables/useScheduleBlocks';
 import type { ScheduleBlock } from '@/types';
 import BlockCard from './BlockCard.vue';
 
-const props = defineProps<{
-  weekDays: Date[];
-  blocks: ScheduleBlock[];
-}>();
+const props = withDefaults(
+  defineProps<{
+    weekDays: Date[];
+    blocks: ScheduleBlock[];
+    startHour?: number;
+    endHour?: number;
+    pixelsPerHour?: number;
+  }>(),
+  { startHour: 8, endHour: 22, pixelsPerHour: 60 }
+);
 
 const emit = defineEmits<{
     (e: 'block-click', block: ScheduleBlock): void;
     (e: 'grid-click', data: { date: Date, hour: number }): void;
 }>();
 
-const startHour = 8;
-const endHour = 22;
-const pixelsPerHour = 60;
-const totalHeight = (endHour - startHour) * pixelsPerHour;
+const grid = useScheduleGrid(
+  () => props.startHour,
+  () => props.endHour,
+  () => props.pixelsPerHour
+);
 
-const hours = computed(() => {
-  const h = [];
-  for (let i = startHour; i <= endHour; i++) {
-    h.push(i);
+const TOP_OFFSET_PX = 12;
+const topOffset = TOP_OFFSET_PX;
+
+const gridHours = computed((): number[] => grid.hours.value);
+const gridContentHeight = computed(() => grid.totalHeight.value + topOffset);
+const dates = useScheduleDates();
+
+const handleGridClick = (event: MouseEvent, day: Date) => {
+  const hour = grid.getHourFromClick(event, topOffset);
+  if (hour !== null) {
+    emit('grid-click', { date: day, hour });
   }
-  return h;
-});
-
-function handleGridClick(event: MouseEvent, day: Date) {
-    const clickY = event.offsetY; 
-    const hourOffset = clickY / pixelsPerHour;
-    const hour = Math.floor(startHour + hourOffset);
-    
-    // Clamp
-    if (hour >= startHour && hour < endHour) {
-        emit('grid-click', { date: day, hour });
-    }
-}
-
-function isToday(date: Date) {
-  const today = new Date();
-  return date.getDate() === today.getDate() && 
-         date.getMonth() === today.getMonth() && 
-         date.getFullYear() === today.getFullYear();
-}
-
-function formatDayName(date: Date) {
-  return new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(date);
-}
-
-function formatHour(hour: number) {
-  return `${hour.toString().padStart(2, '0')}:00`;
-}
-
-function getBlocksForDay(date: Date) {
-  return props.blocks.filter(b => {
-    const blockDate = new Date(b.start);
-    return blockDate.getDate() === date.getDate() && 
-           blockDate.getMonth() === date.getMonth() && 
-           blockDate.getFullYear() === date.getFullYear();
-  });
-}
+};
 </script>
 
 <style scoped>

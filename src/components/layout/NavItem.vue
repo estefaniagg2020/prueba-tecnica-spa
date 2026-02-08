@@ -18,7 +18,6 @@
        {{ label }}
       </span>
 
-      <!-- Active Indicator Line (Optional aesthetic touch) -->
       <div 
         v-if="isActive && !collapsed"
         class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 rounded-r-full bg-current opacity-20"
@@ -29,6 +28,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
+import { ROUTE_HOME } from '@/data/navLinks';
 
 const props = defineProps<{
     to: string;
@@ -41,7 +41,7 @@ const props = defineProps<{
 const route = useRoute();
 
 const isActive = computed(() => {
-    if (props.to === '/') return route.path === '/';
+    if (props.to === ROUTE_HOME) return route.path === ROUTE_HOME;
     return route.path.startsWith(props.to);
 });
 </script>

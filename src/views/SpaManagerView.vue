@@ -18,7 +18,6 @@
                 :key="spa.id"
                 class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
             >
-                <!-- Spa Header (Always visible) -->
                 <div class="p-6 flex items-start justify-between bg-gray-50/30">
                     <div class="flex items-center gap-4">
                         <div 
@@ -50,9 +49,7 @@
                     </div>
                 </div>
 
-                <!-- Content Columns -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-100">
-                    <!-- Left: Therapists -->
                     <div class="p-6">
                         <h4 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Equipo Asignado</h4>
                         <div v-if="getTherapistsForSpa(spa.id).length > 0" class="flex flex-wrap gap-3">
@@ -65,6 +62,7 @@
                                     :src="therapist.photoUrl" 
                                     :name="therapist.name" 
                                     :size="32"
+                                    :href="therapist.linkedInUrl"
                                     class="border border-white shadow-sm"
                                 />
                                 <div class="text-sm">
@@ -78,7 +76,6 @@
                         </div>
                     </div>
 
-                    <!-- Right: Available Services -->
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
                              <h4 class="text-sm font-bold text-gray-400 uppercase tracking-wider">Servicios Ofrecidos</h4>
@@ -114,7 +111,6 @@
             </div>
         </div>
 
-        <!-- Spa Edit/Create Modal -->
         <Modal 
             :is-open="isModalOpen" 
             :title="isEditing ? 'Editar Spa' : 'Nuevo Spa'" 
@@ -163,7 +159,6 @@
             </form>
         </Modal>
 
-        <!-- Service Management Modal -->
         <Modal
             :is-open="isServiceModalOpen"
             title="Gestionar Servicios del Spa"
@@ -226,7 +221,6 @@ const isModalOpen = ref(false);
 const isEditing = ref(false);
 const editingId = ref<string | null>(null);
 
-// Service Modal Logic
 const isServiceModalOpen = ref(false);
 const editingSpaId = ref<string | null>(null);
 const selectedServiceIds = ref<string[]>([]);
@@ -254,10 +248,9 @@ const categories: { value: ServiceCategory; label: string; icon: string; borderC
 onMounted(() => {
     spaStore.initialize();
     therapistStore.initialize();
-    // serviceStore is static for now, no init needed
 });
 
-function getThemeClasses(color: string) {
+const getThemeClasses = (color: string) => {
     switch(color) {
         case 'teal': return 'bg-spa-teal shadow-spa-teal/20';
         case 'purple': return 'bg-purple-500 shadow-purple-500/20';
@@ -266,50 +259,50 @@ function getThemeClasses(color: string) {
         case 'pink': return 'bg-pink-500 shadow-pink-500/20';
         default: return 'bg-gray-500';
     }
-}
+};
 
-function getTherapistCount(spaId: string) {
-    return therapistStore.therapists.filter(t => t.spaId === spaId).length;
-}
+const getTherapistCount = (spaId: string) => {
+    return therapistStore.therapists.filter(therapist => therapist.spaId === spaId).length;
+};
 
-function getTherapistsForSpa(spaId: string) {
-    return therapistStore.therapists.filter(t => t.spaId === spaId);
-}
+const getTherapistsForSpa = (spaId: string) => {
+    return therapistStore.therapists.filter(therapist => therapist.spaId === spaId);
+};
 
-function getServicesForSpaByCategory(spa: Spa, category: string) {
+const getServicesForSpaByCategory = (spa: Spa, category: string) => {
     if (!spa.serviceIds) return [];
     const categoryServices = serviceStore.getServicesByCategory(category);
-    return categoryServices.filter(s => spa.serviceIds?.includes(s.id));
-}
+    return categoryServices.filter(service => spa.serviceIds?.includes(service.id));
+};
 
-function resetForm() {
+const resetForm = () => {
     form.name = '';
     form.themeColor = 'teal';
-}
+};
 
-function openCreateModal() {
+const openCreateModal = () => {
     isEditing.value = false;
     editingId.value = null;
     resetForm();
     isModalOpen.value = true;
-}
+};
 
-function editSpa(spa: Spa) {
+const editSpa = (spa: Spa) => {
     isEditing.value = true;
     editingId.value = spa.id;
     form.name = spa.name;
     form.themeColor = spa.themeColor || 'teal';
     isModalOpen.value = true;
-}
+};
 
-function closeModal() {
+const closeModal = () => {
     isModalOpen.value = false;
     resetForm();
     editingId.value = null;
     isEditing.value = false;
-}
+};
 
-function saveSpa() {
+const saveSpa = () => {
     if (isEditing.value && editingId.value) {
         spaStore.updateSpa(editingId.value, { ...form });
         addToast('Spa actualizado correctamente', 'success');
@@ -318,9 +311,9 @@ function saveSpa() {
         addToast('Spa creado con éxito', 'success');
     }
     closeModal();
-}
+};
 
-function confirmDelete(id: string) {
+const confirmDelete = (id: string) => {
     const count = getTherapistCount(id);
     if (count > 0) {
         alert(`No puedes eliminar este Spa porque tiene ${count} terapeutas asignados. Reasígnalos primero.`);
@@ -331,28 +324,28 @@ function confirmDelete(id: string) {
         spaStore.deleteSpa(id);
         addToast('Spa eliminado', 'success');
     }
-}
+};
 
-// Service Management Functions
-function toggleServiceModal(spa: Spa) {
+
+const toggleServiceModal = (spa: Spa) => {
     editingSpaId.value = spa.id;
     selectedServiceIds.value = [...(spa.serviceIds || [])];
     isServiceModalOpen.value = true;
-}
+};
 
-function closeServiceModal() {
+const closeServiceModal = () => {
     isServiceModalOpen.value = false;
     editingSpaId.value = null;
     selectedServiceIds.value = [];
-}
+};
 
-function saveServices() {
+const saveServices = () => {
     if (editingSpaId.value) {
         spaStore.updateSpa(editingSpaId.value, { serviceIds: selectedServiceIds.value });
         addToast('Servicios actualizados', 'success');
         closeServiceModal();
     }
-}
+};
 </script>
 
 <style scoped>

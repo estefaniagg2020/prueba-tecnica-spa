@@ -9,7 +9,8 @@ Este documento define cómo trabajamos en este repositorio: estilo, arquitectura
 
 ### Clean Code
 - Nombres explícitos > comentarios.
-- Funciones pequeñas: **1 intención** por función.
+- Funciones pequeñas: **1 intención** por función (una responsabilidad única).
+- No mezclar en la misma función: IO (lectura/escritura de storage, red) y orquestación/lógica de estado. Si una función lee `localStorage` y además decide defaults y aplica estado, se viola la responsabilidad única: extraer la IO a un adapter.
 - Complejidad ciclomática baja (evitar anidamientos profundos).
 - Early returns y guard clauses.
 - Evitar “boolean traps” (múltiples `boolean` en params); preferir objetos con propiedades nombradas.
@@ -34,9 +35,13 @@ Este documento define cómo trabajamos en este repositorio: estilo, arquitectura
 
 ---
 
-## 2) Arquitectura del proyecto 
+## 2) Arquitectura del proyecto
 
-Por determinar
+- **`infrastructure/`**: adapters que hablan con el mundo exterior (localStorage, HTTP, reloj). Solo IO: leer, escribir, deserializar. Sin lógica de negocio (p. ej. no deciden defaults; devuelven `null` o datos crudos).
+- **`stores/`**: estado reactivo y orquestación. Los stores **no** contienen acceso directo a `localStorage` ni parseo de persistencia; llaman a adapters de `infrastructure/` para cargar/guardar. Funciones como `initialize` solo orquestan: "obtener datos del adapter o defaults → aplicar al estado".
+- **`domain/`** (si aplica): reglas de negocio puras.
+- **`application/`** (si aplica): casos de uso que orquestan dominio y adapters.
+- **UI** (componentes, vistas, composables): consumen stores y composables; no hacen IO directo salvo que sea un adapter explícito.
 
 ## 3) Guía Vue (UI limpia y predecible)
 
@@ -54,6 +59,8 @@ Por determinar
 
 ### Estado (stores)
 - El store no debe contener lógica de dominio compleja: delegar a use cases/servicios de aplicación.
+- El store **no** debe contener lógica de persistencia (no `localStorage.getItem/setItem`, no `JSON.parse` de datos guardados). Esa responsabilidad es de un adapter en `infrastructure/` (p. ej. `spaStorage.ts`). El store importa y usa ese adapter para cargar al iniciar y para guardar en cada mutación.
+- Funciones de inicialización (`initialize`) tienen una sola responsabilidad: obtener estado inicial (desde adapter o defaults) y aplicarlo a los refs. No deben leer/parsear storage dentro del store.
 - Acceso a store desde UI; dominio no conoce stores.
 
 ### Re-render control
@@ -98,6 +105,7 @@ Por determinar
 - Código consistente (formatter) + reglas de lint estrictas.
 - Imports ordenados; sin imports muertos.
 - Sin `console.log` en producción.
+- En componentes (y en general en el front): preferir **arrow functions** para funciones locales: `const nombre = (params) => { ... }` en lugar de `function nombre(params) { ... }`.
 
 ### Pull Requests
 - PR pequeño y enfocado.
@@ -160,6 +168,8 @@ Recomendación de scripts estándar (referencia):
 
 - No metemos lógica de dominio en componentes Vue.
 - No acoplamos casos de uso a Axios/fetch directamente.
+- No ponemos lógica de persistencia (localStorage, parseo de storage) dentro del store: usar adapters en `infrastructure/`.
+- No mezclamos en una misma función IO y orquestación/estado; cada una tiene una responsabilidad única.
 - No introducimos dependencias pesadas sin justificar (bundle size).
 - No optimizamos “a ojo” sin medir si es crítico.
 - No usamos `any` como salida fácil.
@@ -179,5 +189,6 @@ Recomendación de scripts estándar (referencia):
 **Si dudas dónde poner algo:**
 - ¿Es regla de negocio? → `domain/`
 - ¿Coordina pasos? → `application/use-cases/`
-- ¿Habla con el mundo (HTTP/Storage/Clock)? → `infrastructure/`
+- ¿Habla con el mundo (HTTP/Storage/Clock)? → `infrastructure/` (adapters: solo IO, sin lógica de negocio).
+- ¿Maneja estado reactivo y lo carga/guarda? → `stores/` usando adapters de `infrastructure/` para persistencia.
 - ¿Renderiza/interactúa? → `ui/`

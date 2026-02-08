@@ -12,18 +12,12 @@
       {{ icon }}
     </div>
     
-    <!-- Decorator -->
     <div class="absolute -bottom-4 -right-4 w-24 h-24 rounded-full opacity-5 group-hover:scale-110 transition-transform" :class="decoratorClass"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  title: string;
-  value: string | number;
-  icon: string;
-  iconBgClass: string;
-  decoratorClass: string;
-  trend?: number;
-}>();
+import type { MetricCardProps } from '@/interfaces/components';
+
+defineProps<MetricCardProps>();
 </script>

@@ -1,69 +1,66 @@
 import { ref, computed } from 'vue';
 
-type ViewType = 'day' | 'week' | 'month';
+export const VIEW_DAY = 'day';
+export const VIEW_WEEK = 'week';
+export const VIEW_MONTH = 'month';
+const DAYS_PER_WEEK = 7;
+const DATE_FORMAT_LOCALE = 'es-ES';
 
-export function useCalendar() {
+export type ViewType = typeof VIEW_DAY | typeof VIEW_WEEK | typeof VIEW_MONTH;
+
+const getDaysBackToMonday = (dayOfWeek: number) => (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+
+const getDaysInMonth = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+
+export const useCalendar = () => {
   const currentDate = ref(new Date());
-  const view = ref<ViewType>('week');
-
-  // Helper: Clone date to avoid mutation
-  const cloneDate = (date: Date) => new Date(date.getTime());
+  const view = ref<ViewType>(VIEW_WEEK);
 
   const startOfWeek = computed(() => {
-    const d = cloneDate(currentDate.value);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-    d.setDate(diff);
+    const d = new Date(currentDate.value.getTime());
+    const daysBack = getDaysBackToMonday(d.getDay());
+    d.setDate(d.getDate() - daysBack);
     d.setHours(0, 0, 0, 0);
     return d;
   });
 
   const weekDays = computed(() => {
     const start = startOfWeek.value;
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = cloneDate(start);
-      d.setDate(start.getDate() + i);
-      return d;
-    });
+    const y = start.getFullYear();
+    const m = start.getMonth();
+    const d = start.getDate();
+    return Array.from({ length: DAYS_PER_WEEK }, (_, i) => new Date(y, m, d + i));
   });
 
   const monthDays = computed(() => {
-    const d = cloneDate(currentDate.value);
-    d.setDate(1); // Start of month
-    const days = [];
-    // Get previous month days to fill grid if needed (simple version: just current month for now, or full grid)
-    // Let's do a simple full month 
+    const d = currentDate.value;
+    const year = d.getFullYear();
     const month = d.getMonth();
-    while (d.getMonth() === month) {
-        days.push(cloneDate(d));
-        d.setDate(d.getDate() + 1);
-    }
-    return days;
+    const count = getDaysInMonth(d);
+    return Array.from({ length: count }, (_, i) => new Date(year, month, i + 1));
   });
 
-  function next() {
-    const d = cloneDate(currentDate.value);
-    if (view.value === 'day') d.setDate(d.getDate() + 1);
-    else if (view.value === 'week') d.setDate(d.getDate() + 7);
-    else if (view.value === 'month') d.setMonth(d.getMonth() + 1);
+  const advanceByView = (delta: number) => {
+    const d = new Date(currentDate.value.getTime());
+    const v = view.value;
+    if (v === VIEW_DAY) d.setDate(d.getDate() + delta);
+    else if (v === VIEW_WEEK) d.setDate(d.getDate() + delta * DAYS_PER_WEEK);
+    else if (v === VIEW_MONTH) d.setMonth(d.getMonth() + delta);
     currentDate.value = d;
-  }
+  };
 
-  function prev() {
-    const d = cloneDate(currentDate.value);
-    if (view.value === 'day') d.setDate(d.getDate() - 1);
-    else if (view.value === 'week') d.setDate(d.getDate() - 7);
-    else if (view.value === 'month') d.setMonth(d.getMonth() - 1);
-    currentDate.value = d;
-  }
+  const next = () => advanceByView(1);
+  const prev = () => advanceByView(-1);
 
-  function setToday() {
+  const setToday = () => {
     currentDate.value = new Date();
-  }
+  };
 
-  function formatDate(date: Date, options: Intl.DateTimeFormatOptions = { dateStyle: 'medium' }) {
-    return new Intl.DateTimeFormat('es-ES', options).format(date);
-  }
+  const formatDate = (
+    date: Date,
+    options: Intl.DateTimeFormatOptions = { dateStyle: 'medium' }
+  ) => new Intl.DateTimeFormat(DATE_FORMAT_LOCALE, options).format(date);
 
   return {
     currentDate,
@@ -76,4 +73,4 @@ export function useCalendar() {
     setToday,
     formatDate
   };
-}
+};

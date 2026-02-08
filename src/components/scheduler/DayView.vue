@@ -1,9 +1,7 @@
 <template>
   <div class="flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-    <!-- Header -->
     <div class="flex border-b border-gray-200 bg-gray-50">
-      <div class="w-16 flex-shrink-0 border-r border-gray-200 bg-white z-20"></div> <!-- Corner -->
-      <!-- Therapist Columns Header -->
+      <div class="w-16 shrink-0 border-r border-gray-200 bg-white z-20"></div>
       <div class="flex-1 flex overflow-hidden">
         <div 
             v-for="therapist in therapists" 
@@ -17,23 +15,19 @@
       </div>
     </div>
 
-    <!-- Scrollable Grid -->
-    <div class="flex-1 overflow-y-auto relative custom-scrollbar">
-       <div class="flex relative" :style="{ height: totalHeight + 'px' }">
-         
-         <!-- Time Gutter -->
-         <div class="w-16 flex-shrink-0 border-r border-gray-200 bg-white z-10 sticky left-0">
+    <div class="flex-1 min-h-0 overflow-y-auto relative custom-scrollbar">
+       <div class="flex relative" :style="{ height: gridContentHeight + 'px' }">
+         <div class="w-16 shrink-0 border-r border-gray-200 bg-white z-10 sticky left-0">
            <div 
-             v-for="hour in hours" 
+             v-for="(hour) in gridHours" 
              :key="hour" 
              class="absolute w-full text-center text-xs text-gray-400 -mt-2.5"
-             :style="{ top: (hour - startHour) * pixelsPerHour + 'px' }"
+             :style="{ top: topOffset + (hour - props.startHour) * props.pixelsPerHour + 'px' }"
            >
-             {{ formatHour(hour) }}
+             {{ grid.formatHour(hour) }}
            </div>
          </div>
 
-         <!-- Columns Container -->
          <div class="flex-1 flex">
              <div 
                 v-for="therapist in therapists" 
@@ -41,21 +35,20 @@
                 class="flex-1 relative border-r border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors cursor-crosshair min-w-[150px]"
                 @click="handleGridClick($event, therapist.id)"
              >
-                <!-- Grid Lines -->
                 <div 
-                    v-for="hour in hours" 
+                    v-for="(hour) in gridHours" 
                     :key="hour"
                     class="absolute w-full border-b border-gray-100 pointer-events-none"
-                    :style="{ top: (hour - startHour) * pixelsPerHour + 'px' }"
+                    :style="{ top: topOffset + (hour - props.startHour) * props.pixelsPerHour + 'px' }"
                 ></div>
 
-                <!-- Blocks -->
                 <BlockCard 
-                    v-for="block in getBlocksForTherapist(therapist.id)"
+                    v-for="block in filterBlocksByDayAndTherapist(props.blocks, props.date, therapist.id)"
                     :key="block.id"
                     :block="block"
-                    :start-hour="startHour"
-                    :pixels-per-hour="pixelsPerHour"
+                    :start-hour="props.startHour"
+                    :pixels-per-hour="props.pixelsPerHour"
+                    :top-offset="topOffset"
                     @click.stop="$emit('block-click', block)"
                 />
              </div>
@@ -68,56 +61,47 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useScheduleGrid } from '@/composables/useScheduleGrid';
+import { filterBlocksByDayAndTherapist } from '@/composables/useScheduleBlocks';
 import type { ScheduleBlock, Therapist } from '@/types';
 import BlockCard from './BlockCard.vue';
 
-const props = defineProps<{
-  date: Date;
-  blocks: ScheduleBlock[];
-  therapists: Therapist[];
-}>();
+const props = withDefaults(
+  defineProps<{
+    date: Date;
+    blocks: ScheduleBlock[];
+    therapists: Therapist[];
+    startHour?: number;
+    endHour?: number;
+    pixelsPerHour?: number;
+  }>(),
+  { startHour: 8, endHour: 22, pixelsPerHour: 90 }
+);
 
 const emit = defineEmits<{
     (e: 'block-click', block: ScheduleBlock): void;
     (e: 'grid-click', data: { date: Date, hour: number, therapistId: string }): void;
 }>();
 
-const startHour = 8;
-const endHour = 22;
-const pixelsPerHour = 90; 
-const totalHeight = (endHour - startHour) * pixelsPerHour;
+const grid = useScheduleGrid(
+  () => props.startHour,
+  () => props.endHour,
+  () => props.pixelsPerHour
+);
 
-const hours = computed(() => {
-  const h = [];
-  for (let i = startHour; i <= endHour; i++) {
-    h.push(i);
+const TOP_OFFSET_PX = 12;
+const topOffset = TOP_OFFSET_PX;
+
+const gridHours = computed((): number[] => grid.hours.value);
+
+const gridContentHeight = computed(() => grid.totalHeight.value + topOffset);
+
+const handleGridClick = (event: MouseEvent, therapistId: string) => {
+  const hour = grid.getHourFromClick(event, topOffset);
+  if (hour !== null) {
+    emit('grid-click', { date: props.date, hour, therapistId });
   }
-  return h;
-});
-
-function formatHour(hour: number) {
-  return `${hour.toString().padStart(2, '0')}:00`;
-}
-
-function getBlocksForTherapist(therapistId: string) {
-    return props.blocks.filter(b => {
-        const blockDate = new Date(b.start);
-        const isSameDay = blockDate.getDate() === props.date.getDate() && 
-                          blockDate.getMonth() === props.date.getMonth() && 
-                          blockDate.getFullYear() === props.date.getFullYear();
-        return isSameDay && b.therapistId === therapistId;
-    });
-}
-
-function handleGridClick(event: MouseEvent, therapistId: string) {
-    const clickY = event.offsetY; 
-    const hourOffset = clickY / pixelsPerHour;
-    const hour = Math.floor(startHour + hourOffset);
-    
-    if (hour >= startHour && hour < endHour) {
-        emit('grid-click', { date: props.date, hour, therapistId });
-    }
-}
+};
 </script>
 
 <style scoped>
