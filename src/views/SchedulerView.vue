@@ -144,6 +144,7 @@
       @close="closeModal"
       @save="saveBlock"
       @delete="deleteBlock"
+      @update:date="selectedDate = $event"
     />
   </div>
 </template>

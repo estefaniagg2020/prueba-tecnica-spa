@@ -1,8 +1,8 @@
 <template>
   <div
-    class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group relative min-w-0 flex flex-col"
+    class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group relative min-w-0 flex flex-col h-[360px] w-full"
   >
-    <div class="p-4 sm:p-6 flex flex-col items-center min-w-0">
+    <div class="p-4 sm:p-6 flex flex-col items-center min-w-0 flex-1 min-h-0">
       <div
         class="absolute top-2 right-2 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10"
       >
@@ -67,7 +67,7 @@
         </div>
       </div>
 
-      <div class="w-full min-w-0 pt-4 mt-0 border-t border-gray-100 space-y-2 text-sm text-gray-600">
+      <div class="w-full min-w-0 pt-4 mt-auto border-t border-gray-100 space-y-2 text-sm text-gray-600 shrink-0">
         <div class="flex items-center gap-2 min-w-0">
           <span class="text-spa-teal shrink-0">📧</span>
           <span

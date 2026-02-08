@@ -6,6 +6,7 @@ export const BLOCK_EDITOR_LABELS = {
   LABEL_TITLE: "Título",
   PLACEHOLDER_TITLE: "ej. Turno Mañana",
   LABEL_ACTIVITY_TYPE: "Tipo de Actividad",
+  LABEL_DATE: "Día",
   LABEL_START: "Inicio",
   LABEL_END: "Fin",
   LABEL_NOTES: "Notas (Opcional)",

@@ -1,11 +1,11 @@
 <template>
   <div
-    class="relative"
+    class="relative w-full h-full min-h-[140px] aspect-square"
     ref="tileRef"
   >
     <button
       type="button"
-      class="w-full flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-100 bg-white shadow-sm active:bg-gray-50 min-w-0"
+      class="w-full h-full min-h-0 flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-gray-100 bg-white shadow-sm active:bg-gray-50 min-w-0 overflow-visible"
       :style="{ borderTopColor: therapist.color, borderTopWidth: '3px' }"
       @click.stop="toggleMenu"
     >
@@ -26,15 +26,14 @@
         </span>
       </div>
       <span
-        class="text-sm font-medium text-gray-800 text-center truncate w-full px-0.5 flex items-center justify-center gap-1"
+        class="h-11 shrink-0 w-full min-w-0 px-0.5 flex items-center justify-center"
         :title="therapist.name"
       >
         <span
-          v-if="isManager"
-          aria-hidden
-          >{{ CROWN }}</span
+          class="text-sm font-medium text-gray-800 text-center w-full min-w-0 line-clamp-2 leading-snug wrap-break-word"
         >
-        {{ therapist.name }}
+          {{ therapist.name }}
+        </span>
       </span>
     </button>
 

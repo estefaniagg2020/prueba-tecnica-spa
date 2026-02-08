@@ -43,17 +43,12 @@ export const useTherapistManager = () => {
   const form = reactive<TherapistFormState>(getInitialForm());
 
   const orderedTherapists = computed(() => {
-    const list = store.therapists;
-    const byId = new Map(list.map((t) => [t.id, t]));
-    const result: Therapist[] = [];
-    for (const id of DEFAULT_IDS_ORDER) {
-      const t = byId.get(id);
-      if (t) result.push(t);
-    }
-    for (const t of list) {
-      if (!DEFAULT_IDS_ORDER.includes(t.id)) result.push(t);
-    }
-    return result;
+    const orderIndex = new Map(DEFAULT_IDS_ORDER.map((id, i) => [id, i]));
+    return [...store.therapists].sort((a, b) => {
+      const ia = orderIndex.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+      const ib = orderIndex.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+      return ia - ib;
+    });
   });
 
   const resetForm = () => {
