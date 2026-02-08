@@ -22,6 +22,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^22.7.5",
     "@vitejs/plugin-vue": "^5.1.4",
+    "@vitest/coverage-v8": "^2.1.9",
     "@vitest/ui": "^2.1.1",
     "jsdom": "^25.0.1",
     "prettier": "^3.8.1",
