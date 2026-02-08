@@ -42,6 +42,16 @@ pnpm typecheck  # verificacion de tipos
 - `src/stores`: stores (Pinia)
 - `src/test`: configuracion y tests
 
+## Prueba / Demostración (sin backend)
+
+La aplicación incluye un flujo de **cambio de rol** (Manager / Empleado) con un popup de contraseña solo para simular la autenticación. No hay backend real.
+
+- **Contraseña demo para cambiar de rol:** `demo`
+- En la barra lateral, haz clic en el bloque de usuario (nombre + "Cambiar Rol ⚡"). Se abre un modal donde puedes elegir rol (Manager o Empleado), si eres empleado seleccionar qué empleado eres en la lista, y escribir la contraseña. Con la contraseña `demo` se confirma el cambio.
+- Los datos (agenda, terapeutas, spas, peticiones rechazadas) se persisten en `localStorage`.
+
+Para más detalle por pantalla (qué hace cada vista, roles, persistencia), ver la carpeta **[docs/](./docs/)** (índice en `docs/README.md`).
+
 ## Notas
 
 - Usa `pnpm` porque el repo incluye `pnpm-lock.yaml`.

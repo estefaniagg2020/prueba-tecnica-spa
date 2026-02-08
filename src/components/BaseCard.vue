@@ -5,9 +5,9 @@
 </template>
 
 <script setup lang="ts">
-type Props = {
-  cardClass?: string
-}
+  type Props = {
+    cardClass?: string;
+  };
 
-defineProps<Props>()
+  defineProps<Props>();
 </script>
