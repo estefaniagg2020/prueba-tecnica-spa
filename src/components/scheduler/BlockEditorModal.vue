@@ -22,6 +22,17 @@
         />
       </div>
 
+      <div v-if="!editor.isEditing">
+        <label class="block text-sm font-bold text-gray-700 mb-1">{{ editor.labels.LABEL_DATE }}</label>
+        <input
+          :value="chosenDateStr"
+          type="date"
+          required
+          class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-spa-teal/50"
+          @input="onDateInput"
+        />
+      </div>
+
       <div>
         <label class="block text-sm font-bold text-gray-700 mb-1">{{ editor.labels.LABEL_ACTIVITY_TYPE }}</label>
         <div class="grid grid-cols-2 gap-2">
@@ -101,6 +112,7 @@
 </template>
 
 <script setup lang="ts">
+  import { ref, watch } from "vue";
   import Modal from "../common/Modal.vue";
   import BaseButton from "../common/BaseButton.vue";
   import type { ScheduleBlock } from "@/interfaces";
@@ -113,7 +125,39 @@
     (e: "close"): void;
     (e: "save", data: Partial<ScheduleBlock>): void;
     (e: "delete"): void;
+    (e: "update:date", value: Date): void;
   }>();
 
   const editor = useBlockEditorForm(props, emit);
+
+  const toYYYYMMDD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
+  const chosenDateStr = ref("");
+
+  watch(
+    () => [props.isOpen, props.initialDate] as const,
+    ([open, initial]) => {
+      if (open && initial) {
+        chosenDateStr.value = toYYYYMMDD(initial);
+      }
+    },
+    { immediate: true },
+  );
+
+  const onDateInput = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const value = target?.value;
+    if (value) {
+      const next = new Date(value + "T12:00:00");
+      if (!Number.isNaN(next.getTime())) {
+        chosenDateStr.value = value;
+        emit("update:date", next);
+      }
+    }
+  };
 </script>
