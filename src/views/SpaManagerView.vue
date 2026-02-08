@@ -1,6 +1,5 @@
 <template>
   <div class="h-full flex flex-col p-6 overflow-y-auto">
-    <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
       <div>
         <h2 class="text-2xl font-bold text-gray-800">Gestión de Spas</h2>
@@ -15,7 +14,6 @@
       </BaseButton>
     </div>
 
-    <!-- Spa List -->
     <div class="space-y-6">
       <div
         v-for="spa in spaStore.spas"
@@ -162,9 +160,9 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Color del Tema</label>
           <div class="flex gap-3 mt-2">
             <button
-              type="button"
               v-for="color in themeColors"
               :key="color.value"
+              type="button"
               @click="form.themeColor = color.value"
               class="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 flex items-center justify-center"
               :class="[
@@ -176,8 +174,7 @@
               <span
                 v-if="form.themeColor === color.value"
                 class="text-white text-xs"
-                >✓</span
-              >
+              >✓</span>
             </button>
           </div>
         </div>
@@ -185,8 +182,8 @@
         <div class="flex justify-end gap-3 pt-4">
           <BaseButton
             variant="secondary"
-            @click="closeModal"
             type="button"
+            @click="closeModal"
           >
             Cancelar
           </BaseButton>
@@ -225,9 +222,9 @@
             >
               <div class="flex items-start gap-3">
                 <input
+                  v-model="selectedServiceIds"
                   type="checkbox"
                   :value="service.id"
-                  v-model="selectedServiceIds"
                   class="mt-1 rounded text-spa-teal focus:ring-spa-teal"
                 />
                 <div>
@@ -238,8 +235,7 @@
               <span
                 v-if="service.requiresCabin"
                 class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded"
-                >Cabina</span
-              >
+              >Cabina</span>
             </label>
           </div>
         </div>
@@ -248,168 +244,54 @@
         <BaseButton
           variant="secondary"
           @click="closeServiceModal"
-          >Cancelar</BaseButton
         >
+          Cancelar
+        </BaseButton>
         <BaseButton
           variant="primary"
           @click="saveServices"
-          >Guardar Selección</BaseButton
         >
+          Guardar Selección
+        </BaseButton>
       </div>
     </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, onMounted } from "vue";
-  import { useSpaStore } from "@/stores/spa";
-  import { useTherapistStore } from "@/stores/therapist";
-  import { useServiceStore } from "@/stores/service";
-  import type { Spa, ServiceCategory } from "@/interfaces";
   import BaseButton from "@/components/common/BaseButton.vue";
   import Modal from "@/components/common/Modal.vue";
   import Avatar from "@/components/common/Avatar.vue";
-  import { useToast } from "@/composables/useToast";
+  import { useSpaManager } from "@/composables/useSpaManager";
+  import {
+    THEME_COLORS,
+    SERVICE_CATEGORIES_FOR_SPA,
+    getThemeClasses,
+  } from "@/data/spaManagerConfig";
 
-  const spaStore = useSpaStore();
-  const therapistStore = useTherapistStore();
-  const serviceStore = useServiceStore();
-  const { addToast } = useToast();
+  const {
+    spaStore,
+    serviceStore,
+    isModalOpen,
+    isEditing,
+    isServiceModalOpen,
+    selectedServiceIds,
+    form,
+    getTherapistCount,
+    getTherapistsForSpa,
+    getServicesForSpaByCategory,
+    openCreateModal,
+    editSpa,
+    closeModal,
+    saveSpa,
+    confirmDelete,
+    toggleServiceModal,
+    closeServiceModal,
+    saveServices,
+  } = useSpaManager();
 
-  const isModalOpen = ref(false);
-  const isEditing = ref(false);
-  const editingId = ref<string | null>(null);
-
-  const isServiceModalOpen = ref(false);
-  const editingSpaId = ref<string | null>(null);
-  const selectedServiceIds = ref<string[]>([]);
-
-  const form = reactive({
-    name: "",
-    themeColor: "teal",
-  });
-
-  const themeColors = [
-    { value: "teal", label: "Teal", bgClass: "bg-spa-teal" },
-    { value: "purple", label: "Purple", bgClass: "bg-purple-500" },
-    { value: "blue", label: "Blue", bgClass: "bg-blue-500" },
-    { value: "orange", label: "Orange", bgClass: "bg-orange-500" },
-    { value: "pink", label: "Pink", bgClass: "bg-pink-500" },
-  ];
-
-  const categories: { value: ServiceCategory; label: string; icon: string; borderClass: string }[] = [
-    { value: "manual", label: "Tratamientos Manuales", icon: "🤲", borderClass: "border-orange-200" },
-    { value: "hydrotherapy", label: "Hidroterapia", icon: "💧", borderClass: "border-blue-200" },
-    { value: "aesthetic", label: "Estética", icon: "💅", borderClass: "border-pink-200" },
-    { value: "wellness", label: "Bienestar y Salud", icon: "🧘", borderClass: "border-green-200" },
-  ];
-
-  onMounted(() => {
-    spaStore.initialize();
-    therapistStore.initialize();
-  });
-
-  const getThemeClasses = (color: string) => {
-    switch (color) {
-      case "teal":
-        return "bg-spa-teal shadow-spa-teal/20";
-      case "purple":
-        return "bg-purple-500 shadow-purple-500/20";
-      case "blue":
-        return "bg-blue-500 shadow-blue-500/20";
-      case "orange":
-        return "bg-orange-500 shadow-orange-500/20";
-      case "pink":
-        return "bg-pink-500 shadow-pink-500/20";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
-  const getTherapistCount = (spaId: string) => {
-    return therapistStore.therapists.filter((therapist) => therapist.spaId === spaId).length;
-  };
-
-  const getTherapistsForSpa = (spaId: string) => {
-    return therapistStore.therapists.filter((therapist) => therapist.spaId === spaId);
-  };
-
-  const getServicesForSpaByCategory = (spa: Spa, category: string) => {
-    if (!spa.serviceIds) return [];
-    const categoryServices = serviceStore.getServicesByCategory(category);
-    return categoryServices.filter((service) => spa.serviceIds?.includes(service.id));
-  };
-
-  const resetForm = () => {
-    form.name = "";
-    form.themeColor = "teal";
-  };
-
-  const openCreateModal = () => {
-    isEditing.value = false;
-    editingId.value = null;
-    resetForm();
-    isModalOpen.value = true;
-  };
-
-  const editSpa = (spa: Spa) => {
-    isEditing.value = true;
-    editingId.value = spa.id;
-    form.name = spa.name;
-    form.themeColor = spa.themeColor || "teal";
-    isModalOpen.value = true;
-  };
-
-  const closeModal = () => {
-    isModalOpen.value = false;
-    resetForm();
-    editingId.value = null;
-    isEditing.value = false;
-  };
-
-  const saveSpa = () => {
-    if (isEditing.value && editingId.value) {
-      spaStore.updateSpa(editingId.value, { ...form });
-      addToast("Spa actualizado correctamente", "success");
-    } else {
-      spaStore.addSpa({ ...form, themeColor: form.themeColor });
-      addToast("Spa creado con éxito", "success");
-    }
-    closeModal();
-  };
-
-  const confirmDelete = (id: string) => {
-    const count = getTherapistCount(id);
-    if (count > 0) {
-      alert(`No puedes eliminar este Spa porque tiene ${count} terapeutas asignados. Reasígnalos primero.`);
-      return;
-    }
-
-    if (confirm("¿Estás seguro de eliminar este Spa?")) {
-      spaStore.deleteSpa(id);
-      addToast("Spa eliminado", "success");
-    }
-  };
-
-  const toggleServiceModal = (spa: Spa) => {
-    editingSpaId.value = spa.id;
-    selectedServiceIds.value = [...(spa.serviceIds || [])];
-    isServiceModalOpen.value = true;
-  };
-
-  const closeServiceModal = () => {
-    isServiceModalOpen.value = false;
-    editingSpaId.value = null;
-    selectedServiceIds.value = [];
-  };
-
-  const saveServices = () => {
-    if (editingSpaId.value) {
-      spaStore.updateSpa(editingSpaId.value, { serviceIds: selectedServiceIds.value });
-      addToast("Servicios actualizados", "success");
-      closeServiceModal();
-    }
-  };
+  const themeColors = THEME_COLORS;
+  const categories = SERVICE_CATEGORIES_FOR_SPA;
 </script>
 
 <style scoped>
